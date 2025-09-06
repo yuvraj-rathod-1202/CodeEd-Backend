@@ -3,10 +3,10 @@ from typing import List
 
 class Personalized_Quiz(BaseModel):
     scores: List[int]
-    total_questions: List[int]
+    total_questions: int
     correct_answers: int
     incorrect_answers: int
-    time_taken: int  # in seconds
+    time_taken: List[int]  # in seconds
     feedback: str
     difficulty: str
     title: str
@@ -15,9 +15,7 @@ class Personalized_Quiz(BaseModel):
     average_score: float
     
 class Personalized_Quiz_Content(BaseModel):
-    quizes: List[Personalized_Quiz]
-    summary_titles: List[str]
-    flowchart_titles: List[str]
+    quizzes: List[Personalized_Quiz]
 
 class Personalized_Flowchart(BaseModel):
     title: str
@@ -26,8 +24,6 @@ class Personalized_Flowchart(BaseModel):
 
 class Personalized_Flowchart_Content(BaseModel):
     flowcharts: List[Personalized_Flowchart]
-    quiz_titles: List[str]
-    summary_titles: List[str]
 
 class Personalized_Summary(BaseModel):
     original_length: int
@@ -37,8 +33,6 @@ class Personalized_Summary(BaseModel):
 
 class Personalized_Summary_Content(BaseModel):
     summaries: List[Personalized_Summary]
-    quiz_titles: List[str]
-    flowchart_titles: List[str]
 
 class Personalized_User_Content(BaseModel):
     country: str
@@ -46,6 +40,10 @@ class Personalized_User_Content(BaseModel):
     experience: str
     interests: List[str]
     education: str
+    
+    
+class Personalized_Content(BaseModel):
+    personalized_info: Personalized_User_Content
     personalized_quiz: Personalized_Quiz_Content
     personalized_flowchart: Personalized_Flowchart_Content
-    personalized_summary: Personalized_Summary_Content
+    # personalized_summary: Personalized_Summary_Content
