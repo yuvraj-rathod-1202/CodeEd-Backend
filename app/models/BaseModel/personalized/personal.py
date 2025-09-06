@@ -1,13 +1,18 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict
 
+class Feedback(BaseModel):
+    experience: str
+    improvements: List[str]
+    rating: int
+    
 class Personalized_Quiz(BaseModel):
     scores: List[int]
     total_questions: int
     correct_answers: int
     incorrect_answers: int
     time_taken: List[int]  # in seconds
-    feedback: str
+    feedback: Feedback
     difficulty: str
     title: str
     quiz_type: str
@@ -19,7 +24,7 @@ class Personalized_Quiz_Content(BaseModel):
 
 class Personalized_Flowchart(BaseModel):
     title: str
-    feedback: str
+    feedback: Feedback
     node_count: int
 
 class Personalized_Flowchart_Content(BaseModel):
@@ -28,7 +33,7 @@ class Personalized_Flowchart_Content(BaseModel):
 class Personalized_Summary(BaseModel):
     original_length: int
     summary_length: int
-    feedback: str
+    feedback: Feedback
     format: str
 
 class Personalized_Summary_Content(BaseModel):
@@ -36,7 +41,7 @@ class Personalized_Summary_Content(BaseModel):
 
 class Personalized_Flashcard(BaseModel):
     title: str
-    feedback: str
+    feedback: Feedback
     flashcard_count: int
 
 class Personalized_Flashcard_Content(BaseModel):

@@ -1,4 +1,4 @@
-from app.models.BaseModel.personalized.personal import Personalized_Quiz, Personalized_Quiz_Content
+from app.models.BaseModel.personalized.personal import Feedback, Personalized_Quiz, Personalized_Quiz_Content
 from app.models.BaseModel.personalized.firebase import Submission
 from typing import List
 
@@ -18,7 +18,11 @@ def extract_personalized_quiz(quiz_data) -> Personalized_Quiz:
         correct_answers=correct_answer,
         incorrect_answers=incorrect_answer,
         time_taken=[getattr(sub, 'time_taken', 0) for sub in quiz_data.get('submissions', [])] if quiz_data.get('submissions') else [],
-        feedback="",
+        feedback=Feedback(
+            experience=quiz_data.get('feedback', {}).get('experience', ''),
+            improvements=quiz_data.get('feedback', {}).get('improvements', []),
+            rating=quiz_data.get('feedback', {}).get('rating', 0)
+        ),
         difficulty=quiz_data.get('difficulty', ''),
         title=quiz_data.get('title', ''),
         quiz_type=quiz_data.get('quiz_type', ''),

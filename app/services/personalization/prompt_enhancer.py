@@ -170,12 +170,6 @@ def get_flashcard_pattern_insights(flashcards: List[Personalized_Flashcard]) -> 
         else:
             insights.append("Memory Learning: New to using flashcards for study")
         
-        # Analyze feedback patterns if available
-        feedback_patterns = [card.feedback for card in flashcards if hasattr(card, 'feedback') and card.feedback]
-        if feedback_patterns:
-            positive_feedback = sum(1 for feedback in feedback_patterns if any(word in feedback.lower() for word in ['good', 'excellent', 'helpful', 'useful']))
-            if positive_feedback > len(feedback_patterns) * 0.7:
-                insights.append("Flashcard Success: Shows strong engagement with flashcard-based learning")
         
     except Exception as e:
         print(f"Error analyzing flashcard patterns: {e}")
