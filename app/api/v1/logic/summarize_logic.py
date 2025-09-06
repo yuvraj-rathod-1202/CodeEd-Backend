@@ -6,7 +6,8 @@ import re
 import math
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-
+from dotenv import load_dotenv
+load_dotenv()
 # Configure Gemini API
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 

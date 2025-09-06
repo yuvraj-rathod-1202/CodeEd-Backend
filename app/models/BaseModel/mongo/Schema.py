@@ -46,7 +46,7 @@ class Response(BaseModel):
     score: list[Score] | None = None
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name  = True
         json_encoders = {ObjectId: str}
         extra = "forbid"
         arbitrary_types_allowed = True
@@ -60,7 +60,7 @@ class User(BaseModel):
     responses: list[PyObjectId] | None = None
 
     class Config:
-        allow_population_by_field_name = True
+        validate_by_name  = True
         json_encoders = {ObjectId: str}
         extra = "forbid"
         arbitrary_types_allowed = True

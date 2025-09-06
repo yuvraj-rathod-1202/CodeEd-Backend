@@ -7,6 +7,8 @@ from app.api.v1.logic.flowchart_logic import create_flowchart_logic
 from app.models.BaseModel.mongo.Schema import UserResponse, User
 from app.api.v1.logic.generate_questions import generate_question_logic
 from app.api.v1.logic.extract_text_from_pdf import extract_text_from_pdf_logic
+from app.api.v1.logic.scrape_web_page import scrape_web_page_logic
+from app.models.BaseModel.common import scrapedWebPageResponse, scrapedWebPageRequest
 
 router = APIRouter()
 
@@ -23,6 +25,17 @@ async def generateQuestion(request: generateQuestionRequest):
 async def extract_text_from_pdf(pdf_file: UploadFile = File(...)):
     print(f"Received file: {pdf_file.filename}")
     return await extract_text_from_pdf_logic(pdf_file)
+
+@router.post('/get-youtube-transcript')
+async def get_youtube_transcript(video_url: str):
+    # Logic to get YouTube transcript goes here
+    return {"transcript": "This is a dummy transcript."}
+
+@router.post('/get-webpage-text', response_model=scrapedWebPageResponse)
+async def get_webpage_text(request: scrapedWebPageRequest):
+    url = request.url
+    text = await scrape_web_page_logic(url)
+    return scrapedWebPageResponse(text=text)
 
 @router.post('/summarize', response_model=summarize_textResponse)
 async def summarize_text(request: summarize_textRequest):

@@ -9,3 +9,9 @@ class Question(BaseModel):
     explanation: str
     options: Optional[List[str]] = None
     correct: Union[int, bool, str, None]
+
+class scrapedWebPageResponse(BaseModel):
+    text: str
+
+class scrapedWebPageRequest(BaseModel):
+    url: str

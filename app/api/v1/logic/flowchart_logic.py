@@ -3,7 +3,8 @@ import json
 import os
 from typing import Dict, Any, List, Optional
 from app.models.BaseModel.flowchart import flowchart_response, Node, Nodes
-
+from dotenv import load_dotenv
+load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 class FlowchartGenerator:
