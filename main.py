@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.api.v1.routes import router
-from app.db.mongodb import connect_to_mongo
+from app.services.firebase.config import FirebaseConfig
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -19,10 +19,12 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 
-# @app.on_event("startup")
-# async def statup_event():
-#     await connect_to_mongo()
-#     print("Connected to MongoDB")
+@app.on_event("startup")
+async def statup_event():
+    firebase_config = FirebaseConfig()
+    firebase_config.initialize_firebase()
+    print("Connected to Firebase")
+    
 
 app.include_router(router, prefix='/api/v1')
 
