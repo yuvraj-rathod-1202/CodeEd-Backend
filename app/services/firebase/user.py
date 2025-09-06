@@ -1,0 +1,32 @@
+from app.models.BaseModel.personalized.firebase import User
+from app.models.BaseModel.personalized.personal import Personalized_User_Content
+
+def extract_personalized_user(user_data) -> Personalized_User_Content:
+    return Personalized_User_Content(
+        country=getattr(user_data, "country", "Unknown"),
+        goal=getattr(user_data, "goal", "General Learning"),
+        experience=getattr(user_data, "experience", "Beginner"),
+        interests=getattr(user_data, "interests", ["General"]),
+        education=getattr(user_data, "education", "Not Specified"),
+    )
+
+class UserService:
+    def __init__(self, db):
+        self.db = db
+
+    def get_user_by_id(self, userId: str):
+        user_doc = self.db.collection('users').document(userId).get()
+        if user_doc.exists:
+            return User(**user_doc.to_dict())
+        
+    def get_personalized_user_content(self, userId: str) -> Personalized_User_Content:
+        user = self.get_user_by_id(userId)
+        if user:
+            return extract_personalized_user(user)
+        return Personalized_User_Content(
+            country="Unknown",
+            goal="General Learning",
+            experience="Beginner",
+            interests=["General"],
+            education="Not Specified"
+        )

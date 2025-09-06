@@ -1,10 +1,7 @@
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 from fastapi import HTTPException
 import asyncio
 from typing import Dict
-
-# Initialize the translator
-translator = Translator()
 
 # Language code mapping
 LANGUAGE_CODES = {
@@ -36,16 +33,16 @@ async def change_language(text: str, target_language: str) -> str:
         loop = asyncio.get_running_loop()
         translated = await loop.run_in_executor(
             None,
-            lambda: translator.translate(text, dest=target_lang_code)
+            lambda: GoogleTranslator(source="auto", target=target_lang_code).translate(text)
         )
 
-        return translated.text
+        return translated  # ✅ returns string directly
 
     except HTTPException:
         raise
     except Exception as e:
         error_msg = str(e).lower()
-        if "language" in error_msg and ("not supported" in error_msg or "invalid" in error_msg):
+        if "not supported" in error_msg or "invalid" in error_msg:
             raise HTTPException(
                 status_code=400,
                 detail=f"Unsupported language: {target_language}"
@@ -58,18 +55,25 @@ async def change_language(text: str, target_language: str) -> str:
         else:
             raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
 
-async def detect_language(text: str) -> Dict[str, str]:
-    try:
-        if not text.strip():
-            raise HTTPException(status_code=400, detail="Text cannot be empty")
+# For detection you need a different lib
+# Example with langdetect:
+# pip install langdetect
+# from langdetect import detect, detect_langs
 
-        loop = asyncio.get_running_loop()
-        detected = await loop.run_in_executor(
-            None,
-            lambda: translator.detect(text)
-        )
+# async def detect_language(text: str) -> Dict[str, str]:
+#     try:
+#         if not text.strip():
+#             raise HTTPException(status_code=400, detail="Text cannot be empty")
 
-        return {"language": detected.lang, "confidence": str(detected.confidence)}
+#         loop = asyncio.get_running_loop()
+#         detected = await loop.run_in_executor(
+#             None,
+#             lambda: detect_langs(text)
+#         )
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Language detection failed: {str(e)}")
+#         # detect_langs gives list of possibilities with probabilities
+#         best = detected[0]
+#         return {"language": best.lang, "confidence": str(best.prob)}
+
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Language detection failed: {str(e)}")
