@@ -1,12 +1,13 @@
 import json
 import os
 from google import genai
-from typing import Dict, List, Union, Any, TypedDict
+from typing import Dict, List, Union, Any, TypedDict, Optional
 import re
 import math
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
+from app.services.personalization.prompt_enhancer import enhance_prompt_with_personalization
 load_dotenv()
 # Configure Gemini API
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -26,7 +27,7 @@ class SummarizeResponse(TypedDict):
 class TextSummarizer:
     def __init__(self):
         # Gemini's approximate token limit (leaving buffer for prompt and response)
-        self.max_tokens_per_request = 30000
+        self.max_tokens_per_request = 25000
         # Approximate characters per token (rough estimate)
         self.chars_per_token = 4
         self.max_chars_per_chunk = self.max_tokens_per_request * self.chars_per_token
@@ -78,7 +79,7 @@ class TextSummarizer:
         
         return chunks
 
-    def create_summary_prompt(self, text: str, format_type: str, length: str = "medium", is_chunk: bool = False) -> str:
+    def create_summary_prompt(self, text: str, format_type: str, length: str = "medium", is_chunk: bool = False, userId: Optional[str] = None) -> str:
         """Create appropriate prompt based on format, length and whether it's a chunk"""
         
         chunk_prefix = "This is part of a larger text. " if is_chunk else ""
@@ -93,7 +94,7 @@ class TextSummarizer:
         length_instruction = length_instructions.get(length.lower(), length_instructions["medium"])
         
         if format_type.lower() == "paragraph":
-            prompt = f"""
+            base_prompt = f"""
             {chunk_prefix}Please provide a comprehensive summary of the following text in paragraph format.
             Also provide a title for the summary.
             The summary should capture the main ideas, key points, and important details in a coherent narrative.
@@ -111,7 +112,7 @@ class TextSummarizer:
             }}
             """
         elif format_type.lower() == "bullet_points" or format_type.lower() == "bullets":
-            prompt = f"""
+            base_prompt = f"""
             {chunk_prefix}Please provide a summary of the following text in bullet point format.
             Also provide a title for the summary.
             Extract the main ideas and key points and present them as clear, concise bullet points.
@@ -129,7 +130,7 @@ class TextSummarizer:
             """
         else:
             # Default to paragraph format
-            prompt = f"""
+            base_prompt = f"""
             {chunk_prefix}Please provide a comprehensive summary of the following text.
             Also provide a title for the summary.
             The summary should capture the main ideas, key points, and important details.
@@ -147,12 +148,16 @@ class TextSummarizer:
             }}
             """
         
-        return prompt
+        # Enhance the prompt with personalization if userId is provided
+        if userId:
+            return enhance_prompt_with_personalization(base_prompt, userId)
+        
+        return base_prompt
 
-    def generate_summary_for_chunk(self, text: str, format_type: str, length: str = "medium", is_chunk: bool = False) -> Dict[str, Any]:
+    def generate_summary_for_chunk(self, text: str, format_type: str, length: str = "medium", is_chunk: bool = False, userId: Optional[str] = None) -> Dict[str, Any]:
         """Generate summary for a single chunk of text"""
         try:
-            prompt = self.create_summary_prompt(text, format_type, length, is_chunk)
+            prompt = self.create_summary_prompt(text, format_type, length, is_chunk, userId)
             response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt, config={"response_mime_type": "application/json"})
             if response.text is None:
                 raise ValueError("No text received from LLM.")
@@ -164,7 +169,7 @@ class TextSummarizer:
         except Exception as e:
             raise Exception(f"Error generating summary: {str(e)}")
 
-    def combine_chunk_summaries(self, summaries: List[Dict[str, Any]], format_type: str, length: str = "medium") -> Dict[str, Any]:
+    def combine_chunk_summaries(self, summaries: List[Dict[str, Any]], format_type: str, length: str = "medium", userId: Optional[str] = None) -> Dict[str, Any]:
         """Combine multiple chunk summaries into a final summary"""
         if len(summaries) == 1:
             return summaries[0]
@@ -192,7 +197,7 @@ class TextSummarizer:
         
         if format_type.lower() == "paragraph":
             combined_text = "\n\n".join(summary_texts)
-            prompt = f"""
+            base_prompt = f"""
             The following are summaries of different parts of a larger text. 
             Please combine them into a single, coherent paragraph summary that flows naturally.
             Remove any redundancy and ensure the summary captures all key points.
@@ -220,7 +225,7 @@ class TextSummarizer:
                     all_bullets.extend(bullets)
             
             combined_text = "\n".join([f"• {bullet}" for bullet in all_bullets])
-            prompt = f"""
+            base_prompt = f"""
             The following are bullet points from summaries of different parts of a larger text.
             Please combine them into a single, organized list of bullet points.
             Remove duplicates, merge similar points, and organize them logically.
@@ -238,7 +243,7 @@ class TextSummarizer:
             """
         else:
             combined_text = "\n\n".join(summary_texts)
-            prompt = f"""
+            base_prompt = f"""
             The following are summaries of different parts of a larger text.
             Please combine them into a single, comprehensive summary.
             Remove any redundancy and ensure all key points are covered.
@@ -255,6 +260,12 @@ class TextSummarizer:
             }}
             """
         
+        # Enhance the prompt with personalization if userId is provided
+        if userId:
+            prompt = enhance_prompt_with_personalization(base_prompt, userId)
+        else:
+            prompt = base_prompt
+        
         try:
             response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt, config={"response_mime_type": "application/json"})
             if response.text is None:
@@ -267,7 +278,7 @@ class TextSummarizer:
                 "summary": summary_texts[0] if summary_texts else ""
             }
 
-    def summarize_text(self, text: str, format_type: str = "paragraph", length: str = "medium") -> Dict[str, Any]:
+    def summarize_text(self, text: str, format_type: str = "paragraph", length: str = "medium", userId: Optional[str] = None) -> Dict[str, Any]:
         """Main method to summarize text with automatic chunking if needed"""
         if not text or not text.strip():
             raise ValueError("Text cannot be empty")
@@ -284,7 +295,7 @@ class TextSummarizer:
         # Check if text needs to be chunked
         if len(text) <= self.max_chars_per_chunk:
             # Text is small enough, summarize directly
-            return self.generate_summary_for_chunk(text, format_type, length, False)
+            return self.generate_summary_for_chunk(text, format_type, length, False, userId)
         else:
             # Text is too large, need to chunk it
             chunks = self.split_text_into_chunks(text)
@@ -294,11 +305,11 @@ class TextSummarizer:
             chunk_summaries = []
             for i, chunk in enumerate(chunks, 1):
                 print(f"Processing chunk {i}/{len(chunks)}")
-                summary = self.generate_summary_for_chunk(chunk, format_type, length, True)
+                summary = self.generate_summary_for_chunk(chunk, format_type, length, True, userId)
                 chunk_summaries.append(summary)
             
             # Combine all chunk summaries into final summary
-            final_summary = self.combine_chunk_summaries(chunk_summaries, format_type, length)
+            final_summary = self.combine_chunk_summaries(chunk_summaries, format_type, length, userId)
             return final_summary
 
 # Initialize the summarizer
@@ -315,10 +326,11 @@ async def summarize_text_logic(request) -> SummarizeResponse:
         SummarizeResponse containing success status, summary, and metadata
     """
     try:
-        # Extract text and format from request
+        # Extract text, format, and userId from request
         text = request.text
         format_type = request.format if hasattr(request, 'format') else "paragraph"
         length = request.length if hasattr(request, 'length') else "medium"
+        userId = request.userId if hasattr(request, 'userId') else None
         
         # Validate inputs
         if not text or not text.strip():
@@ -356,7 +368,8 @@ async def summarize_text_logic(request) -> SummarizeResponse:
                 text_summarizer.summarize_text, 
                 text, 
                 format_type,
-                length
+                length,
+                userId
             )
         
         # Extract title and summary from result
@@ -397,7 +410,7 @@ async def summarize_text_logic(request) -> SummarizeResponse:
             "compression_ratio": None
         }
 
-def summarize_text_sync(text: str, format_type: str = "paragraph", length: str = "medium") -> Dict[str, Union[str, int, float, bool, None]]:
+def summarize_text_sync(text: str, format_type: str = "paragraph", length: str = "medium", userId: Optional[str] = None) -> Dict[str, Union[str, int, float, bool, None]]:
     """
     Synchronous version of text summarization logic
     
@@ -405,6 +418,7 @@ def summarize_text_sync(text: str, format_type: str = "paragraph", length: str =
         text (str): The text to summarize
         format_type (str): Format for summary - 'paragraph' or 'bullet_points'
         length (str): Length of summary - 'small', 'medium', or 'large'
+        userId (Optional[str]): Optional user ID for personalization
     
     Returns:
         Dict containing success status, summary, and metadata
@@ -437,7 +451,7 @@ def summarize_text_sync(text: str, format_type: str = "paragraph", length: str =
         estimated_tokens = text_summarizer.estimate_tokens(text)
         
         # Run summarization
-        result = text_summarizer.summarize_text(text, format_type, length)
+        result = text_summarizer.summarize_text(text, format_type, length, userId)
         
         # Extract title and summary from result
         title = result.get("title", "Summary")
