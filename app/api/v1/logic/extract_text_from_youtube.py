@@ -4,8 +4,6 @@ import re
 from youtube_transcript_api._api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
 
-API_KEY = "a03dc5f7e87341fe8eb2e1f362e9f5b8"
-
 def get_video_id(url: str) -> str:
     # Extract video ID from YouTube URL
     pattern = r'(?:v=|\/)([0-9A-Za-z_-]{11})(?:\?|&|$)*'

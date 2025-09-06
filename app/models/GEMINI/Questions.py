@@ -3,13 +3,15 @@ from app.models.BaseModel.common import Question
 import os
 from dotenv import load_dotenv
 import json
+from typing import Optional
+from app.services.personalization.prompt_enhancer import enhance_prompt_with_personalization
 
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 class GetQuestions:
-    def get_questions(self, text: str, numbers: int, difficulty: str = "Medium", quiz_type: str = "mix") -> tuple[list[Question], str]:
+    def get_questions(self, text: str, numbers: int, difficulty: str = "Medium", quiz_type: str = "mix", userId: Optional[str] = None) -> tuple[list[Question], str]:
         current_id = 1
 
         if quiz_type == "mix":
@@ -23,19 +25,19 @@ class GetQuestions:
 
             combined = []
             for t in types:
-                batch, current_id = self.get_questions_for_type(text, type_counts[t], difficulty, t, current_id)
+                batch, current_id = self.get_questions_for_type(text, type_counts[t], difficulty, t, current_id, userId)
                 combined.extend(batch)
-            title = self.get_title_for_quiz(text)
+            title = self.get_title_for_quiz(text, userId)
             return (combined, title)
         else:
-            batch, _ = self.get_questions_for_type(text, numbers, difficulty, quiz_type, current_id)
-            return (batch, self.get_title_for_quiz(text))
+            batch, _ = self.get_questions_for_type(text, numbers, difficulty, quiz_type, current_id, userId)
+            return (batch, self.get_title_for_quiz(text, userId))
 
 
-    def get_questions_for_type(self, text: str, count: int, difficulty: str, quiz_type: str, start_id: int) -> tuple[list[Question], int]:
+    def get_questions_for_type(self, text: str, count: int, difficulty: str, quiz_type: str, start_id: int, userId: Optional[str] = None) -> tuple[list[Question], int]:
         instruction = self._get_quiz_type_instruction(quiz_type)
 
-        prompt = f"""
+        base_prompt = f"""
 Generate {count} {quiz_type.upper()} questions from the given context.
 Each question should match the structure below:
 
@@ -67,6 +69,12 @@ Each question should match the structure below:
 Context:
 {text}
 """
+
+        # Enhance the prompt with personalization if userId is provided
+        if userId:
+            prompt = enhance_prompt_with_personalization(base_prompt, userId)
+        else:
+            prompt = base_prompt
 
 
         try:
@@ -103,12 +111,18 @@ Context:
             print("❌ Generation error:", e)
             return ([], start_id)
 
-    def get_title_for_quiz(self, text: str) -> str:
-        prompt = f"""Generate a concise and engaging title for a quiz based on the following context:
+    def get_title_for_quiz(self, text: str, userId: Optional[str] = None) -> str:
+        base_prompt = f"""Generate a concise and engaging title for a quiz based on the following context:
 {text}
 The title should be catchy, relevant, and reflect the main theme or topic of the content. It should not exceed 10 words and should be suitable for a quiz format.
 Return only the title as a string without any additional text or formatting.
         """
+
+        # Enhance the prompt with personalization if userId is provided
+        if userId:
+            prompt = enhance_prompt_with_personalization(base_prompt, userId)
+        else:
+            prompt = base_prompt
 
         try:
             response = client.models.generate_content(

@@ -56,7 +56,7 @@ async def translate_text(request: TranslationRequest):
 
 @router.post('/flowchart', response_model=flowchart_response)
 async def create_flowchart(request: flowchart_request):
-    return await create_flowchart_logic(request.text, request.instruction)
+    return await create_flowchart_logic(request.text, request.instruction, request.userId)
 
 # @router.post('/saveUserData', response_model=UserResponse)
 # async def saveUserData(request: User):
