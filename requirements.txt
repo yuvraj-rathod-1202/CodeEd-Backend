@@ -16,3 +16,5 @@ deep-translator
 python-docx
 python-pptx
 pytesseract
+pydub
+SpeechRecognition

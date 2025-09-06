@@ -7,6 +7,8 @@ from pptx import Presentation
 from PIL import Image
 import pytesseract
 from io import BytesIO
+import speech_recognition as sr
+from pydub import AudioSegment
 
 async def extract_text_from_pdf_logic(pdf_file) -> Dict[str, str]:
     if not pdf_file.filename.endswith(".pdf"):
@@ -149,6 +151,33 @@ async def extract_text_from_image_logic(image_file) -> Dict[str, str]:
         raise HTTPException(status_code=500, detail=f"no text found in image")
     if(len(cleaned_text) > 100000):
         raise HTTPException(status_code=500, detail=f"Please upload small image")
+    return {"text": cleaned_text}
+
+async def extract_text_from_audio_logic(audio_file) -> Dict[str, str]:
+    if not (audio_file.filename.endswith(".wav") or audio_file.filename.endswith(".mp3") or audio_file.filename.endswith(".m4a")):
+        raise HTTPException(status_code=400, detail="Only WAV, MP3, and M4A files are allowed.")
+    
+    file_content = await audio_file.read()
+    try:
+        audio = AudioSegment.from_file(BytesIO(file_content))
+        audio = audio.set_frame_rate(16000).set_channels(1)
+        temp_wav = BytesIO()
+        audio.export(temp_wav, format="wav")
+        temp_wav.seek(0)
+
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(temp_wav) as source:
+            audio_data = recognizer.record(source)
+            extracted_text = recognizer.recognize_google(audio_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
+    
+    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
+    print("length of text", len(cleaned_text))
+    if(len(cleaned_text) == 0):
+        raise HTTPException(status_code=500, detail=f"no text found in audio")
+    if(len(cleaned_text) > 100000):
+        raise HTTPException(status_code=500, detail=f"Please upload small audio")
     return {"text": cleaned_text}
 
 async def extract_text_logic(file) -> Dict[str, str]:
