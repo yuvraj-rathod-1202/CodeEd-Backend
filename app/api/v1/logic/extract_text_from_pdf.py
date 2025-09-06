@@ -11,6 +11,15 @@ import speech_recognition as sr
 from pydub import AudioSegment
 import ffmpeg
 
+def text_cleaning(extracted_text: str) -> Dict[str, str]:
+    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
+    print("length of text", len(cleaned_text))
+    if(len(cleaned_text) == 0):
+        raise HTTPException(status_code=500, detail=f"no text found in file")
+    if(len(cleaned_text) > 100000):
+        raise HTTPException(status_code=500, detail=f"Please upload small file")
+    return {"text": cleaned_text}
+
 async def extract_text_from_pdf_logic(pdf_file) -> Dict[str, str]:
     if not pdf_file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
@@ -25,14 +34,7 @@ async def extract_text_from_pdf_logic(pdf_file) -> Dict[str, str]:
         doc.close()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
-    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
-    # print(cleaned_text)
-    print("length of text", len(cleaned_text))
-    if(len(cleaned_text) == 0):
-        raise HTTPException(status_code=500, detail=f"no text found in PDF")
-    if(len(cleaned_text) > 100000):
-        raise HTTPException(status_code=500, detail=f"Please upload small pdf")
-    return {"text": cleaned_text}
+    return text_cleaning(extracted_text)
 
 
 async def extract_text_from_docx_logic(docx_file) -> Dict[str, str]:
@@ -50,13 +52,7 @@ async def extract_text_from_docx_logic(docx_file) -> Dict[str, str]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing DOCX: {str(e)}")
     
-    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
-    print("length of text", len(cleaned_text))
-    if(len(cleaned_text) == 0):
-        raise HTTPException(status_code=500, detail=f"no text found in DOCX")
-    if(len(cleaned_text) > 100000):
-        raise HTTPException(status_code=500, detail=f"Please upload small docx")
-    return {"text": cleaned_text}
+    return text_cleaning(extracted_text)
 
 async def extract_text_from_html_logic(html_file) -> Dict[str, str]:
     if not html_file.filename.endswith(".html") and not html_file.filename.endswith(".htm"):
@@ -67,14 +63,8 @@ async def extract_text_from_html_logic(html_file) -> Dict[str, str]:
         extracted_text = file_content.decode('utf-8')
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing HTML: {str(e)}")
-    
-    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
-    print("length of text", len(cleaned_text))
-    if(len(cleaned_text) == 0):
-        raise HTTPException(status_code=500, detail=f"no text found in HTML")
-    if(len(cleaned_text) > 100000):
-        raise HTTPException(status_code=500, detail=f"Please upload small html")
-    return {"text": cleaned_text}
+
+    return text_cleaning(extracted_text)
 
 async def extract_text_from_text_logic(txt_file) -> Dict[str, str]:
     if not txt_file.filename.endswith(".txt"):
@@ -85,14 +75,8 @@ async def extract_text_from_text_logic(txt_file) -> Dict[str, str]:
         extracted_text = file_content.decode('utf-8')
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing TXT: {str(e)}")
-    
-    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
-    print("length of text", len(cleaned_text))
-    if(len(cleaned_text) == 0):
-        raise HTTPException(status_code=500, detail=f"no text found in TXT")
-    if(len(cleaned_text) > 100000):
-        raise HTTPException(status_code=500, detail=f"Please upload small txt")
-    return {"text": cleaned_text}
+
+    return text_cleaning(extracted_text)
 
 async def extract_text_from_pptx_logic(pptx_file) -> Dict[str, str]:
     if not pptx_file.filename.endswith(".pptx"):
@@ -109,13 +93,7 @@ async def extract_text_from_pptx_logic(pptx_file) -> Dict[str, str]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing PPTX: {str(e)}")
     
-    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
-    print("length of text", len(cleaned_text))
-    if(len(cleaned_text) == 0):
-        raise HTTPException(status_code=500, detail=f"no text found in PPTX")
-    if(len(cleaned_text) > 100000):
-        raise HTTPException(status_code=500, detail=f"Please upload small pptx")
-    return {"text": cleaned_text}
+    return text_cleaning(extracted_text)
 
 async def extract_text_from_md_logic(md_file) -> Dict[str, str]:
     if not md_file.filename.endswith(".md"):
@@ -127,13 +105,7 @@ async def extract_text_from_md_logic(md_file) -> Dict[str, str]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing MD: {str(e)}")
     
-    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
-    print("length of text", len(cleaned_text))
-    if(len(cleaned_text) == 0):
-        raise HTTPException(status_code=500, detail=f"no text found in MD")
-    if(len(cleaned_text) > 100000):
-        raise HTTPException(status_code=500, detail=f"Please upload small md")
-    return {"text": cleaned_text}
+    return text_cleaning(extracted_text)
 
 async def extract_text_from_image_logic(image_file) -> Dict[str, str]:
     if not (image_file.filename.endswith(".png") or image_file.filename.endswith(".jpg") or image_file.filename.endswith(".jpeg")):
@@ -146,13 +118,7 @@ async def extract_text_from_image_logic(image_file) -> Dict[str, str]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
     
-    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
-    print("length of text", len(cleaned_text))
-    if(len(cleaned_text) == 0):
-        raise HTTPException(status_code=500, detail=f"no text found in image")
-    if(len(cleaned_text) > 100000):
-        raise HTTPException(status_code=500, detail=f"Please upload small image")
-    return {"text": cleaned_text}
+    return text_cleaning(extracted_text)
 
 async def extract_text_from_audio_logic(audio_file) -> Dict[str, str]:
     if not (audio_file.filename.endswith(".wav") or audio_file.filename.endswith(".mp3") or audio_file.filename.endswith(".m4a")):
@@ -173,13 +139,7 @@ async def extract_text_from_audio_logic(audio_file) -> Dict[str, str]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
     
-    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
-    print("length of text", len(cleaned_text))
-    if(len(cleaned_text) == 0):
-        raise HTTPException(status_code=500, detail=f"no text found in audio")
-    if(len(cleaned_text) > 100000):
-        raise HTTPException(status_code=500, detail=f"Please upload small audio")
-    return {"text": cleaned_text}
+    return text_cleaning(extracted_text)
 
 async def extract_text_from_video_logic(video_file) -> Dict[str, str]:
     if not (video_file.filename.endswith(".mp4") or video_file.filename.endswith(".mov") or video_file.filename.endswith(".avi")):
@@ -203,13 +163,7 @@ async def extract_text_from_video_logic(video_file) -> Dict[str, str]:
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing video: {str(e)}")
     
-    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
-    print("length of text", len(cleaned_text))
-    if(len(cleaned_text) == 0):
-        raise HTTPException(status_code=500, detail=f"no text found in video")
-    if(len(cleaned_text) > 100000):
-        raise HTTPException(status_code=500, detail=f"Please upload small video")
-    return {"text": cleaned_text}
+    return text_cleaning(extracted_text)
 
 async def extract_text_logic(file) -> Dict[str, str]:
     if file.size > 10 * 1024 * 1024:  # 10 MB
