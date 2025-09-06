@@ -8,7 +8,7 @@ from app.api.v1.logic.flowchart_logic import create_flowchart_logic
 from app.api.v1.logic.flashcard_logic import create_flashcard_logic
 from app.models.BaseModel.mongo.Schema import UserResponse, User
 from app.api.v1.logic.generate_questions import generate_question_logic
-from app.api.v1.logic.extract_text_from_pdf import extract_text_from_pdf_logic
+from app.api.v1.logic.extract_text_from_pdf import extract_text_logic
 from app.api.v1.logic.scrape_web_page import scrape_web_page_logic
 from app.models.BaseModel.common import scrapedWebPageResponse, scrapedWebPageRequest, YouTubeTranscriptRequest, YouTubeTranscriptResponse, TranslationRequest, TranslationResponse
 from app.api.v1.logic.extract_text_from_youtube import extract_text_from_youtube_logic
@@ -27,9 +27,9 @@ async def generateQuestion(request: generateQuestionRequest):
 #     return UserResponse(user_id=request.user_id, message="User data saved successfully")
 
 @router.post('/extract-text')
-async def extract_text_from_pdf(pdf_file: UploadFile = File(...)):
-    print(f"Received file: {pdf_file.filename}")
-    return await extract_text_from_pdf_logic(pdf_file)
+async def extract_text_from_pdf(file: UploadFile = File(...)):
+    print(f"Received file: {file.filename}")
+    return await extract_text_logic(file)
 
 @router.post('/get-youtube-transcript', response_model=YouTubeTranscriptResponse)
 async def get_youtube_transcript(request: YouTubeTranscriptRequest):

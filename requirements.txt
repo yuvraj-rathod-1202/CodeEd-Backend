@@ -13,3 +13,6 @@ requests
 readability-lxml
 firebase-admin
 deep-translator
+python-docx
+python-pptx
+pytesseract
