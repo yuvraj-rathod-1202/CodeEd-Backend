@@ -187,14 +187,14 @@ async def extract_text_from_video_logic(video_file) -> Dict[str, str]:
     
     file_content = await video_file.read()
     try:
-        temp_audio = BytesIO()
-        (
+        out, err = (
             ffmpeg
             .input('pipe:0')
             .output('pipe:1', format='wav', acodec='pcm_s16le', ac=1, ar='16000')
-            .run(input=file_content, capture_stdout=True, capture_stderr=True, stdout=temp_audio)
+            .run(input=file_content, capture_stdout=True, capture_stderr=True)
         )
-        temp_audio.seek(0)
+
+        temp_audio = BytesIO(out)
 
         recognizer = sr.Recognizer()
         with sr.AudioFile(temp_audio) as source:
