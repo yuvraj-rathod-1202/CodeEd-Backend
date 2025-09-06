@@ -3,11 +3,11 @@ from app.models.BaseModel.personalized.personal import Personalized_User_Content
 
 def extract_personalized_user(user_data) -> Personalized_User_Content:
     return Personalized_User_Content(
-        country=user_data.get('country', ''),
-        goal=user_data.get('goal', ''),
-        experience=user_data.get('experience', ''),
-        interests=user_data.get('interests', []),
-        education=user_data.get('education', ''),
+        country=getattr(user_data, "country", "Unknown"),
+        goal=getattr(user_data, "goal", "General Learning"),
+        experience=getattr(user_data, "experience", "Beginner"),
+        interests=getattr(user_data, "interests", ["General"]),
+        education=getattr(user_data, "education", "Not Specified"),
     )
 
 class UserService:
@@ -24,9 +24,9 @@ class UserService:
         if user:
             return extract_personalized_user(user)
         return Personalized_User_Content(
-            country='',
-            goal='',
-            experience='',
-            interests=[],
-            education=''
+            country="Unknown",
+            goal="General Learning",
+            experience="Beginner",
+            interests=["General"],
+            education="Not Specified"
         )

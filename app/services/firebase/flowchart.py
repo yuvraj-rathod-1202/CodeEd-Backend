@@ -5,7 +5,7 @@ def extract_personalized_flowchart(flowchart_data) -> Personalized_Flowchart:
     return Personalized_Flowchart(
         title=flowchart_data.get('title', ''),
         feedback=flowchart_data.get('feedback', ''),
-        node_count=len(flowchart_data.get('nodes', []))
+        node_count=len(flowchart_data.get('flowchart', {'nodes': 0}).get('nodes', []))
     )
 
 class FlowchartService:
