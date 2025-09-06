@@ -28,3 +28,7 @@ class PersonalizedContentService:
         )
     
     
+def get_personalized_content(userId: str) -> Personalized_Content:
+    db = None  # Initialize your Firestore DB connection here
+    service = PersonalizedContentService(db)
+    return service.get_personalized_content(userId)
