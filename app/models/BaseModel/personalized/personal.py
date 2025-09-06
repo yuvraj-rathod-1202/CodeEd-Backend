@@ -34,6 +34,14 @@ class Personalized_Summary(BaseModel):
 class Personalized_Summary_Content(BaseModel):
     summaries: List[Personalized_Summary]
 
+class Personalized_Flashcard(BaseModel):
+    title: str
+    feedback: str
+    flashcard_count: int
+
+class Personalized_Flashcard_Content(BaseModel):
+    flashcards: List[Personalized_Flashcard]
+
 class Personalized_User_Content(BaseModel):
     country: str
     goal: str
@@ -46,4 +54,5 @@ class Personalized_Content(BaseModel):
     personalized_info: Personalized_User_Content
     personalized_quiz: Personalized_Quiz_Content
     personalized_flowchart: Personalized_Flowchart_Content
+    personalized_flashcard: Personalized_Flashcard_Content
     # personalized_summary: Personalized_Summary_Content

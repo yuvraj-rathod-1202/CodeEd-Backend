@@ -4,7 +4,7 @@ Utility functions for creating personalized prompts based on user details
 
 from typing import Optional, Dict, Any, List
 from app.services.firebase.get_persionalized_content import get_personalized_content
-from app.models.BaseModel.personalized.personal import Personalized_User_Content, Personalized_Content, Personalized_Quiz, Personalized_Flowchart
+from app.models.BaseModel.personalized.personal import Personalized_User_Content, Personalized_Content, Personalized_Quiz, Personalized_Flowchart, Personalized_Flashcard
 
 
 def get_quiz_performance_insights(quizzes: List[Personalized_Quiz]) -> List[str]:
@@ -125,6 +125,60 @@ def get_flowchart_pattern_insights(flowcharts: List[Personalized_Flowchart]) -> 
         
     except Exception as e:
         print(f"Error analyzing flowchart patterns: {e}")
+    
+    return insights
+
+
+def get_flashcard_pattern_insights(flashcards: List[Personalized_Flashcard]) -> List[str]:
+    """
+    Analyze flashcard creation patterns and return insights.
+    
+    Args:
+        flashcards: List of personalized flashcard data
+        
+    Returns:
+        List[str]: Flashcard pattern insights for personalization
+    """
+    if not flashcards:
+        return []
+    
+    insights = []
+    
+    try:
+        # Analyze flashcard count preferences
+        total_cards = sum(card.flashcard_count for card in flashcards if hasattr(card, 'flashcard_count'))
+        avg_cards = total_cards / len(flashcards) if flashcards else 0
+        
+        if avg_cards > 0:
+            if avg_cards >= 15:
+                insights.append("Study Style: Prefers comprehensive flashcard sets for thorough memorization")
+            elif avg_cards >= 8:
+                insights.append("Study Style: Likes moderate-sized flashcard sets for balanced learning")
+            else:
+                insights.append("Study Style: Prefers concise flashcard sets focusing on key points")
+        
+        # Analyze recent flashcard topics/titles
+        recent_titles = [card.title for card in flashcards[-3:] if hasattr(card, 'title') and card.title]
+        if recent_titles:
+            insights.append(f"Recent Study Topics: {', '.join(recent_titles[:2])}")
+        
+        # Analyze frequency of flashcard creation
+        if len(flashcards) >= 5:
+            insights.append("Memory Learning: Frequently uses flashcards for memorization and review")
+        elif len(flashcards) >= 2:
+            insights.append("Memory Learning: Sometimes uses flashcards for important concepts")
+        else:
+            insights.append("Memory Learning: New to using flashcards for study")
+        
+        # Analyze feedback patterns if available
+        feedback_patterns = [card.feedback for card in flashcards if hasattr(card, 'feedback') and card.feedback]
+        if feedback_patterns:
+            positive_feedback = sum(1 for feedback in feedback_patterns if any(word in feedback.lower() for word in ['good', 'excellent', 'helpful', 'useful']))
+            if positive_feedback > len(feedback_patterns) * 0.7:
+                insights.append("Flashcard Success: Shows strong engagement with flashcard-based learning")
+        
+    except Exception as e:
+        print(f"Error analyzing flashcard patterns: {e}")
     
     return insights
 
@@ -342,6 +396,11 @@ def get_user_context_string(userId: Optional[str] = None, user_context: Optional
         flowchart_insights = get_flowchart_pattern_insights(personalized_content.personalized_flowchart.flowcharts)
         if flowchart_insights:
             context_parts.extend(flowchart_insights)
+        
+        # Add flashcard pattern insights
+        flashcard_insights = get_flashcard_pattern_insights(personalized_content.personalized_flashcard.flashcards)
+        if flashcard_insights:
+            context_parts.extend(flashcard_insights)
         
         # Add comprehensive learning pattern insights
         learning_pattern_insights = get_learning_pattern_insights(personalized_content)
