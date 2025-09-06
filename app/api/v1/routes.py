@@ -59,11 +59,11 @@ async def translate_text(request: TranslationRequest):
 
 @router.post('/flowchart', response_model=flowchart_response)
 async def create_flowchart(request: flowchart_request):
-    return await create_flowchart_logic(request.text, request.instruction, request.userId)
+    return await create_flowchart_logic(request.text, request.instruction, request.userId, request.language)
 
 @router.post('/flashcard', response_model=flashcard_response)
 async def create_flashcard(request: flashcard_request):
-    return await create_flashcard_logic(request.text, request.instruction, request.userId)
+    return await create_flashcard_logic(request.text, request.instruction, request.userId, request.language)
 
 # @router.post('/saveUserData', response_model=UserResponse)
 # async def saveUserData(request: User):

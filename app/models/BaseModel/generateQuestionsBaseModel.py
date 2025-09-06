@@ -8,6 +8,7 @@ class generateQuestionRequest(BaseModel):
     numbers: int
     difficulty: str
     quiz_type: str
+    language: Optional[str] = "English"
     userId: Optional[str]
 
 

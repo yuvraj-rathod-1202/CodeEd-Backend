@@ -12,4 +12,5 @@ class flashcard_response(BaseModel):
 class flashcard_request(BaseModel):
     text: str
     instruction: Optional[str] = None  # Optional instruction for flashcard generation
+    language: Optional[str] = "English"
     userId: Optional[str] = None  # Optional user ID for personalization

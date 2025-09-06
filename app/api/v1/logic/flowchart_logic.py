@@ -19,7 +19,7 @@ class FlowchartGenerator:
         # genai.configure(api_key=api_key)
         # self.model = genai.GenerativeModel('gemini-2.0-flash')
 
-    def _create_flowchart_prompt(self, text: str, instruction: Optional[str] = None, userId: Optional[str] = None) -> str:
+    def _create_flowchart_prompt(self, text: str, instruction: Optional[str] = None, userId: Optional[str] = None, language: Optional[str] = "English") -> str:
         """Create a detailed prompt for flowchart generation."""
         
         # Base prompt
@@ -74,6 +74,8 @@ class FlowchartGenerator:
         6. Focus on logical flow and hierarchical relationships
         7. Ensure all referenced indices exist in the nodes array
         8. Make the flowchart educational and easy to follow
+        
+        Flowchart Language: {language} (the main language should be {language}, but some English words are also acceptable)
 
         Return ONLY the JSON response, no additional text or formatting.
         """
@@ -160,7 +162,7 @@ class FlowchartGenerator:
             }
         }
 
-    async def generate_flowchart(self, text: str, instruction: Optional[str] = None, userId: Optional[str] = None) -> flowchart_response:
+    async def generate_flowchart(self, text: str, instruction: Optional[str] = None, userId: Optional[str] = None, language: Optional[str] = "English") -> flowchart_response:
         """
         Generate a flowchart based on the provided text using Gemini AI.
         
@@ -174,7 +176,7 @@ class FlowchartGenerator:
         """
         try:
             # Create the personalized prompt
-            prompt = self._create_flowchart_prompt(text, instruction, userId)
+            prompt = self._create_flowchart_prompt(text, instruction, userId, language)
 
             # Generate content using Gemini
             response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt, config={"response_mime_type": "application/json"})
@@ -223,7 +225,7 @@ class FlowchartGenerator:
 # Global instance
 flowchart_generator = FlowchartGenerator()
 
-async def create_flowchart_logic(text: str, instruction: Optional[str] = None, userId: Optional[str] = None) -> flowchart_response:
+async def create_flowchart_logic(text: str, instruction: Optional[str] = None, userId: Optional[str] = None, language: Optional[str] = "English") -> flowchart_response:
     """
     Main function to create flowchart logic based on input text.
     
@@ -235,4 +237,4 @@ async def create_flowchart_logic(text: str, instruction: Optional[str] = None, u
     Returns:
         flowchart_response: Generated flowchart with title and hierarchical nodes
     """
-    return await flowchart_generator.generate_flowchart(text, instruction, userId)
+    return await flowchart_generator.generate_flowchart(text, instruction, userId, language)

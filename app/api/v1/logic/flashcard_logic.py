@@ -19,7 +19,7 @@ class FlashcardGenerator:
         self.max_flashcards = 20
         self.min_flashcards = 5
 
-    def _create_flashcard_prompt(self, text: str, instruction: Optional[str] = None, userId: Optional[str] = None) -> str:
+    def _create_flashcard_prompt(self, text: str, instruction: Optional[str] = None, userId: Optional[str] = None, language: Optional[str] = "English") -> str:
         """
         Create a personalized prompt for flashcard generation.
         
@@ -54,6 +54,8 @@ IMPORTANT RULES:
 - Include context when necessary for clarity
 - Make sure each flashcard is self-contained and understandable
 
+Flashcard Language: {language} (the main language should be {language}, but some English words are also acceptable)
+
 Text to create flashcards from:
 {text}
 
@@ -75,7 +77,7 @@ Please respond in JSON format with:
         
         return base_prompt
 
-    async def generate_flashcards(self, text: str, instruction: Optional[str] = None, userId: Optional[str] = None) -> flashcard_response:
+    async def generate_flashcards(self, text: str, instruction: Optional[str] = None, userId: Optional[str] = None, language: Optional[str] = "English") -> flashcard_response:
         """
         Generate flashcards based on the provided text using Gemini AI.
         
@@ -89,7 +91,7 @@ Please respond in JSON format with:
         """
         try:
             # Create the personalized prompt
-            prompt = self._create_flashcard_prompt(text, instruction, userId)
+            prompt = self._create_flashcard_prompt(text, instruction, userId, language)
 
             # Generate content using Gemini
             response = client.models.generate_content(
@@ -165,7 +167,7 @@ Please respond in JSON format with:
 # Global instance
 flashcard_generator = FlashcardGenerator()
 
-async def create_flashcard_logic(text: str, instruction: Optional[str] = None, userId: Optional[str] = None) -> flashcard_response:
+async def create_flashcard_logic(text: str, instruction: Optional[str] = None, userId: Optional[str] = None, language: Optional[str] = "English") -> flashcard_response:
     """
     Main function to create flashcard logic based on input text.
     
@@ -177,4 +179,4 @@ async def create_flashcard_logic(text: str, instruction: Optional[str] = None, u
     Returns:
         flashcard_response: Generated flashcards with title
     """
-    return await flashcard_generator.generate_flashcards(text, instruction, userId)
+    return await flashcard_generator.generate_flashcards(text, instruction, userId, language)

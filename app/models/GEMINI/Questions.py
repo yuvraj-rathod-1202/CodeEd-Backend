@@ -11,7 +11,7 @@ load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 class GetQuestions:
-    def get_questions(self, text: str, numbers: int, difficulty: str = "Medium", quiz_type: str = "mix", userId: Optional[str] = None) -> tuple[list[Question], str]:
+    def get_questions(self, text: str, numbers: int, difficulty: str = "Medium", quiz_type: str = "mix", userId: Optional[str] = None, language: Optional[str] = "English") -> tuple[list[Question], str]:
         current_id = 1
 
         if quiz_type == "mix":
@@ -27,14 +27,14 @@ class GetQuestions:
             for t in types:
                 batch, current_id = self.get_questions_for_type(text, type_counts[t], difficulty, t, current_id, userId)
                 combined.extend(batch)
-            title = self.get_title_for_quiz(text, userId)
+            title = self.get_title_for_quiz(text, userId, language)
             return (combined, title)
         else:
             batch, _ = self.get_questions_for_type(text, numbers, difficulty, quiz_type, current_id, userId)
-            return (batch, self.get_title_for_quiz(text, userId))
+            return (batch, self.get_title_for_quiz(text, userId, language))
 
 
-    def get_questions_for_type(self, text: str, count: int, difficulty: str, quiz_type: str, start_id: int, userId: Optional[str] = None) -> tuple[list[Question], int]:
+    def get_questions_for_type(self, text: str, count: int, difficulty: str, quiz_type: str, start_id: int, userId: Optional[str] = None, language: Optional[str] = "English") -> tuple[list[Question], int]:
         instruction = self._get_quiz_type_instruction(quiz_type)
 
         base_prompt = f"""
@@ -65,6 +65,8 @@ Each question should match the structure below:
 - Add subtle **curiosity triggers** that make the user want to learn more after each question.
 - Ensure that the quiz **adds value** — by either introducing a new insight or reinforcing important ideas in an interesting way.
 - The goal is not just assessment, but to **make the user feel smarter and curious to explore more**.
+
+Quiz Language: {language} (the main language should be {language}, but some English words are also acceptable)
 
 Context:
 {text}
@@ -111,9 +113,12 @@ Context:
             print("❌ Generation error:", e)
             return ([], start_id)
 
-    def get_title_for_quiz(self, text: str, userId: Optional[str] = None) -> str:
+    def get_title_for_quiz(self, text: str, userId: Optional[str] = None, language: Optional[str] = "English") -> str:
         base_prompt = f"""Generate a concise and engaging title for a quiz based on the following context:
 {text}
+
+Title Language: {language} (the main language should be {language}, but some English words are also acceptable)
+
 The title should be catchy, relevant, and reflect the main theme or topic of the content. It should not exceed 10 words and should be suitable for a quiz format.
 Return only the title as a string without any additional text or formatting.
         """

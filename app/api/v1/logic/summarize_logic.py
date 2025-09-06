@@ -79,7 +79,7 @@ class TextSummarizer:
         
         return chunks
 
-    def create_summary_prompt(self, text: str, format_type: str, length: str = "medium", is_chunk: bool = False, userId: Optional[str] = None) -> str:
+    def create_summary_prompt(self, text: str, format_type: str, length: str = "medium", is_chunk: bool = False, userId: Optional[str] = None, language: Optional[str] = "English") -> str:
         """Create appropriate prompt based on format, length and whether it's a chunk"""
         
         chunk_prefix = "This is part of a larger text. " if is_chunk else ""
@@ -104,7 +104,9 @@ class TextSummarizer:
             
             Text to summarize:
             {text}
-            
+
+            Summary Language: {language} (the main language should be {language}, but some English words are also acceptable)
+
             Please respond in JSON format with:
             {{
                 "title": "A brief title for the summary",
@@ -154,10 +156,10 @@ class TextSummarizer:
         
         return base_prompt
 
-    def generate_summary_for_chunk(self, text: str, format_type: str, length: str = "medium", is_chunk: bool = False, userId: Optional[str] = None) -> Dict[str, Any]:
+    def generate_summary_for_chunk(self, text: str, format_type: str, length: str = "medium", is_chunk: bool = False, userId: Optional[str] = None, language: Optional[str] = "English") -> Dict[str, Any]:
         """Generate summary for a single chunk of text"""
         try:
-            prompt = self.create_summary_prompt(text, format_type, length, is_chunk, userId)
+            prompt = self.create_summary_prompt(text, format_type, length, is_chunk, userId, language)
             response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt, config={"response_mime_type": "application/json"})
             if response.text is None:
                 raise ValueError("No text received from LLM.")
@@ -169,7 +171,7 @@ class TextSummarizer:
         except Exception as e:
             raise Exception(f"Error generating summary: {str(e)}")
 
-    def combine_chunk_summaries(self, summaries: List[Dict[str, Any]], format_type: str, length: str = "medium", userId: Optional[str] = None) -> Dict[str, Any]:
+    def combine_chunk_summaries(self, summaries: List[Dict[str, Any]], format_type: str, length: str = "medium", userId: Optional[str] = None, language: Optional[str] = "English") -> Dict[str, Any]:
         """Combine multiple chunk summaries into a final summary"""
         if len(summaries) == 1:
             return summaries[0]
@@ -206,7 +208,9 @@ class TextSummarizer:
             
             Summaries to combine:
             {combined_text}
-            
+
+            Summary Language: {language} (the main language should be {language}, but some English words are also acceptable)
+
             Please respond in JSON format with:
             {{
                 "title": "{combined_title}",
@@ -278,7 +282,7 @@ class TextSummarizer:
                 "summary": summary_texts[0] if summary_texts else ""
             }
 
-    def summarize_text(self, text: str, format_type: str = "paragraph", length: str = "medium", userId: Optional[str] = None) -> Dict[str, Any]:
+    def summarize_text(self, text: str, format_type: str = "paragraph", length: str = "medium", userId: Optional[str] = None, language: Optional[str] = "English") -> Dict[str, Any]:
         """Main method to summarize text with automatic chunking if needed"""
         if not text or not text.strip():
             raise ValueError("Text cannot be empty")
@@ -295,7 +299,7 @@ class TextSummarizer:
         # Check if text needs to be chunked
         if len(text) <= self.max_chars_per_chunk:
             # Text is small enough, summarize directly
-            return self.generate_summary_for_chunk(text, format_type, length, False, userId)
+            return self.generate_summary_for_chunk(text, format_type, length, False, userId, language)
         else:
             # Text is too large, need to chunk it
             chunks = self.split_text_into_chunks(text)
@@ -305,11 +309,11 @@ class TextSummarizer:
             chunk_summaries = []
             for i, chunk in enumerate(chunks, 1):
                 print(f"Processing chunk {i}/{len(chunks)}")
-                summary = self.generate_summary_for_chunk(chunk, format_type, length, True, userId)
+                summary = self.generate_summary_for_chunk(chunk, format_type, length, True, userId, language)
                 chunk_summaries.append(summary)
             
             # Combine all chunk summaries into final summary
-            final_summary = self.combine_chunk_summaries(chunk_summaries, format_type, length, userId)
+            final_summary = self.combine_chunk_summaries(chunk_summaries, format_type, length, userId, language)
             return final_summary
 
 # Initialize the summarizer
@@ -331,6 +335,7 @@ async def summarize_text_logic(request) -> SummarizeResponse:
         format_type = request.format if hasattr(request, 'format') else "paragraph"
         length = request.length if hasattr(request, 'length') else "medium"
         userId = request.userId if hasattr(request, 'userId') else None
+        language = request.language if hasattr(request, 'language') else "English"
         
         # Validate inputs
         if not text or not text.strip():
@@ -369,7 +374,8 @@ async def summarize_text_logic(request) -> SummarizeResponse:
                 text, 
                 format_type,
                 length,
-                userId
+                userId,
+                language
             )
         
         # Extract title and summary from result
@@ -410,77 +416,3 @@ async def summarize_text_logic(request) -> SummarizeResponse:
             "compression_ratio": None
         }
 
-def summarize_text_sync(text: str, format_type: str = "paragraph", length: str = "medium", userId: Optional[str] = None) -> Dict[str, Union[str, int, float, bool, None]]:
-    """
-    Synchronous version of text summarization logic
-    
-    Args:
-        text (str): The text to summarize
-        format_type (str): Format for summary - 'paragraph' or 'bullet_points'
-        length (str): Length of summary - 'small', 'medium', or 'large'
-        userId (Optional[str]): Optional user ID for personalization
-    
-    Returns:
-        Dict containing success status, summary, and metadata
-    """
-    try:
-        # Validate inputs
-        if not text or not text.strip():
-            return {
-                "success": False,
-                "error": "Text cannot be empty",
-                "summary": None,
-                "title": None,
-                "format": format_type,
-                "chunks_processed": 0,
-                "original_length": 0,
-                "summary_length": 0
-            }
-        
-        # Validate format type
-        valid_formats = ["paragraph", "bullet_points", "bullets"]
-        if format_type.lower() not in valid_formats:
-            format_type = "paragraph"  # Default to paragraph
-        
-        # Validate length
-        valid_lengths = ["small", "medium", "large"]
-        if length.lower() not in valid_lengths:
-            length = "medium"  # Default to medium
-        
-        original_length = len(text)
-        estimated_tokens = text_summarizer.estimate_tokens(text)
-        
-        # Run summarization
-        result = text_summarizer.summarize_text(text, format_type, length, userId)
-        
-        # Extract title and summary from result
-        title = result.get("title", "Summary")
-        summary = result.get("summary", "")
-        
-        summary_length = len(str(summary)) if summary else 0
-        chunks_needed = len(text_summarizer.split_text_into_chunks(text))
-        
-        return {
-            "success": True,
-            "error": None,
-            "summary": summary,
-            "title": title,
-            "format": format_type,
-            "chunks_processed": chunks_needed,
-            "original_length": original_length,
-            "summary_length": summary_length,
-            "estimated_tokens": estimated_tokens,
-            "compression_ratio": round(summary_length / original_length, 2) if original_length > 0 else 0
-        }
-        
-    except Exception as e:
-        return {
-            "success": False,
-            "error": f"Error during summarization: {str(e)}",
-            "summary": None,
-            "title": None,
-            "format": format_type,
-            "chunks_processed": 0,
-            "original_length": len(text) if text else 0,
-            "summary_length": 0
-        }
