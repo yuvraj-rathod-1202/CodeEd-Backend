@@ -142,14 +142,14 @@ async def extract_text_from_audio_logic(audio_file) -> Dict[str, str]:
     return text_cleaning(extracted_text)
 
 async def extract_text_from_video_logic(video_file) -> Dict[str, str]:
-    if not (video_file.filename.endswith(".mp4") or video_file.filename.endswith(".mov") or video_file.filename.endswith(".avi")):
-        raise HTTPException(status_code=400, detail="Only MP4, MOV, and AVI files are allowed.")
+    if not (video_file.filename.endswith(".mp4")):
+        raise HTTPException(status_code=400, detail="Only MP4 files are allowed.")
     
     file_content = await video_file.read()
     try:
         out, err = (
             ffmpeg
-            .input('pipe:0')
+            .input('pipe:0', format='mp4')
             .output('pipe:1', format='wav', acodec='pcm_s16le', ac=1, ar='16000')
             .run(input=file_content, capture_stdout=True, capture_stderr=True)
         )
@@ -201,8 +201,8 @@ async def extract_text_logic(file) -> Dict[str, str]:
         textObj = await extract_text_from_audio_logic(file)
         return textObj
     
-    if file.filename.endswith(".mp4") or file.filename.endswith(".mov") or file.filename.endswith(".avi"):
+    if file.filename.endswith(".mp4"):
         textObj = await extract_text_from_video_logic(file)
         return textObj
 
-    return {"text": "No valid file format found. Please upload a PDF, DOCX, HTML, TXT, PPTX, IMAGE, Audio, Video or MD file."}
+    return {"text": "No valid file format found. Please upload a PDF, DOCX, HTML, TXT, PPTX, IMAGE, Audio, Video(.mp4) or MD file."}
