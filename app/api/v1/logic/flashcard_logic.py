@@ -64,7 +64,7 @@ Please respond in JSON format with:
     "title": "A descriptive title for this set of flashcards",
     "flashcards": [
         {{
-            "quetion": "The question for the flashcard front",
+            "question": "The question for the flashcard front",
             "answer": "The comprehensive answer for the flashcard back"
         }}
     ]
@@ -113,9 +113,9 @@ Please respond in JSON format with:
             # Validate and create flashcard objects
             flashcards_list = []
             for card_data in flashcards_data:
-                if isinstance(card_data, dict) and "quetion" in card_data and "answer" in card_data:
+                if isinstance(card_data, dict) and "question" in card_data and "answer" in card_data:
                     flashcard_obj = flashcard(
-                        quetion=card_data["quetion"],
+                        question=card_data["question"],
                         answer=card_data["answer"]
                     )
                     flashcards_list.append(flashcard_obj)
@@ -124,7 +124,7 @@ Please respond in JSON format with:
             if not flashcards_list:
                 flashcards_list = [
                     flashcard(
-                        quetion="What are the main topics covered in the provided text?",
+                        question="What are the main topics covered in the provided text?",
                         answer="The text contains information that can be studied through these flashcards for better understanding and retention."
                     )
                 ]
@@ -146,7 +146,7 @@ Please respond in JSON format with:
             return flashcard_response(
                 flashcards=[
                     flashcard(
-                        quetion="What is the main content of the study material?",
+                        question="What is the main content of the study material?",
                         answer="This flashcard was created as a fallback. Please review the original text for detailed information."
                     )
                 ],
@@ -157,7 +157,7 @@ Please respond in JSON format with:
             return flashcard_response(
                 flashcards=[
                     flashcard(
-                        quetion="Study Question",
+                        question="Study Question",
                         answer=f"An error occurred during flashcard generation: {str(e)}. Please try again with different content."
                     )
                 ],
