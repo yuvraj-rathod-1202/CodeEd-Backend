@@ -12,7 +12,7 @@ from app.api.v1.logic.extract_text_from_pdf import extract_text_from_pdf_logic
 from app.api.v1.logic.scrape_web_page import scrape_web_page_logic
 from app.models.BaseModel.common import scrapedWebPageResponse, scrapedWebPageRequest, YouTubeTranscriptRequest, YouTubeTranscriptResponse, TranslationRequest, TranslationResponse
 from app.api.v1.logic.extract_text_from_youtube import extract_text_from_youtube_logic
-from app.services.text.change_language import change_language
+from app.services.text.change_language import change_language, get_translation_with_context
 from app.api.v1.logic.flashcard_logic import create_flashcard_logic
 
 router = APIRouter()
@@ -51,11 +51,13 @@ async def summarize_text(request: summarize_textRequest):
 
 @router.post('/translate', response_model=TranslationResponse)
 async def translate_text(request: TranslationRequest):
-    text = request.text
-    target_language = request.target_language
-    translated_text = await change_language(text, target_language)
-
-    return TranslationResponse(translated_text=translated_text)
+    if request.instruction:
+        result = await get_translation_with_context(request.text, request.target_language, request.userId, request.instruction)
+    else:
+        result = await change_language(request.text, request.target_language, request.userId)
+    return TranslationResponse(
+        translated_text=result["translated_text"],
+    )
 
 @router.post('/flowchart', response_model=flowchart_response)
 async def create_flowchart(request: flowchart_request):
