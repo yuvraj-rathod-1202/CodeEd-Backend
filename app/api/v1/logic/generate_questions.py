@@ -15,7 +15,7 @@ async def generate_question_logic(request: generateQuestionRequest) -> generateQ
     difficulty = request.difficulty
     quiz_type = request.quiz_type
     language = request.language
-    userId = request.userId if  
+    userId = request.userId
     questions, title = GetQuestionsModel().execute_model(text=transcript, number=numbers, difficulty=difficulty, quiz_type=quiz_type, userId=userId, language=language)
     if not questions:
         return generateQuestionResponse(title="no Title", questions=[Qu(id=1, type="mix", difficulty="Easy", question="No questions generated", correct="The transcript may not contain enough information to generate questions.", explanation="Please provide a more detailed transcript or adjust the parameters.")])
