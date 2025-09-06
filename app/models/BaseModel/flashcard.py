@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 class flashcard(BaseModel):
-    quetion: str
+    question: str
     answer: str
 
 class flashcard_response(BaseModel):
