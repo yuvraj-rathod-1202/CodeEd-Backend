@@ -42,6 +42,17 @@ class Personalized_Flashcard(BaseModel):
 class Personalized_Flashcard_Content(BaseModel):
     flashcards: List[Personalized_Flashcard]
 
+class Personalized_Roadmap(BaseModel):
+    topic: str
+    skill_level: str
+    total_steps: int
+    completion_rate: float  # 0.0 to 1.0
+    time_spent: str
+    feedback: str
+
+class Personalized_Roadmap_Content(BaseModel):
+    roadmaps: List[Personalized_Roadmap]
+
 class Personalized_User_Content(BaseModel):
     country: str
     goal: str

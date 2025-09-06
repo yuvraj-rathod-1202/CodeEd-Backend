@@ -3,9 +3,11 @@ from app.models.BaseModel.generateQuestionsBaseModel import generateQuestionRequ
 from app.models.BaseModel.summrize import summarize_textRequest, summarize_textResponse
 from app.models.BaseModel.flowchart import flowchart_request, flowchart_response
 from app.models.BaseModel.flashcard import flashcard_request, flashcard_response
+from app.models.BaseModel.roadmap import RoadmapRequest, RoadmapResponse
 from app.api.v1.logic.summarize_logic import summarize_text_logic
 from app.api.v1.logic.flowchart_logic import create_flowchart_logic
 from app.api.v1.logic.flashcard_logic import create_flashcard_logic
+from app.api.v1.logic.roadmap_logic import create_roadmap_logic
 from app.models.BaseModel.mongo.Schema import UserResponse, User
 from app.api.v1.logic.generate_questions import generate_question_logic
 from app.api.v1.logic.extract_text_from_pdf import extract_text_logic
@@ -58,3 +60,14 @@ async def create_flowchart(request: flowchart_request):
 @router.post('/flashcard', response_model=flashcard_response)
 async def create_flashcard(request: flashcard_request):
     return await create_flashcard_logic(request.text, request.instruction, request.userId, request.language)
+
+@router.post('/roadmap', response_model=RoadmapResponse)
+async def create_roadmap(request: RoadmapRequest):
+    return await create_roadmap_logic(
+        topic=request.topic,
+        skill_level=request.skill_level or "Beginner",
+        time_commitment=request.time_commitment or "moderate",
+        learning_style=request.learning_style or "balanced",
+        specific_goals=request.specific_goals,
+        userId=request.userId
+    )
