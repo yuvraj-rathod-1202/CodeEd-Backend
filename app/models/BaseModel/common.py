@@ -1,0 +1,11 @@
+from pydantic import BaseModel
+from typing import List, Optional, Union
+
+class Question(BaseModel):
+    id: int
+    question: str
+    type: str
+    difficulty: str
+    explanation: str
+    options: Optional[List[str]] = None
+    correct: Union[int, bool, str, None]
