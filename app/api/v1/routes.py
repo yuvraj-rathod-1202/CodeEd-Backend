@@ -13,18 +13,12 @@ from app.api.v1.logic.scrape_web_page import scrape_web_page_logic
 from app.models.BaseModel.common import scrapedWebPageResponse, scrapedWebPageRequest, YouTubeTranscriptRequest, YouTubeTranscriptResponse, TranslationRequest, TranslationResponse
 from app.api.v1.logic.extract_text_from_youtube import extract_text_from_youtube_logic
 from app.services.text.change_language import change_language, get_translation_with_context
-from app.api.v1.logic.flashcard_logic import create_flashcard_logic
 
 router = APIRouter()
 
 @router.post('/generateQuestions', response_model=generateQuestionResponse)
 async def generateQuestion(request: generateQuestionRequest):
     return await generate_question_logic(request)
-
-# async def save_user_data_logic(request: User) -> UserResponse:
-#     # Logic to save user data goes here
-#     # This is a placeholder implementation
-#     return UserResponse(user_id=request.user_id, message="User data saved successfully")
 
 @router.post('/extract-text')
 async def extract_text_from_pdf(file: UploadFile = File(...)):
@@ -45,8 +39,6 @@ async def get_webpage_text(request: scrapedWebPageRequest):
 @router.post('/summarize', response_model=summarize_textResponse)
 async def summarize_text(request: summarize_textRequest):
     result = await summarize_text_logic(request)
-    
-    # Return the result directly since it already matches SummarizeResponse structure
     return result
 
 @router.post('/translate', response_model=TranslationResponse)
@@ -66,7 +58,3 @@ async def create_flowchart(request: flowchart_request):
 @router.post('/flashcard', response_model=flashcard_response)
 async def create_flashcard(request: flashcard_request):
     return await create_flashcard_logic(request.text, request.instruction, request.userId, request.language)
-
-# @router.post('/saveUserData', response_model=UserResponse)
-# async def saveUserData(request: User):
-#     return await save_user_data_logic(request)
