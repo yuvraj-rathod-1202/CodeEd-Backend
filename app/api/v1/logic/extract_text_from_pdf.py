@@ -23,6 +23,6 @@ async def extract_text_from_pdf_logic(pdf_file) -> Dict[str, str]:
     print("length of text", len(cleaned_text))
     if(len(cleaned_text) == 0):
         raise HTTPException(status_code=500, detail=f"no text found in PDF")
-    if(len(cleaned_text) > 50000):
+    if(len(cleaned_text) > 80000):
         raise HTTPException(status_code=500, detail=f"Please upload small pdf")
     return {"text": cleaned_text}
