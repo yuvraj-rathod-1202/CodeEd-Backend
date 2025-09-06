@@ -11,5 +11,5 @@ PyMuPDF
 beautifulsoup4
 requests
 readability-lxml
-googletrans==4.0.0rc1
 firebase-admin
+deep-translator
