@@ -21,3 +21,10 @@ class YouTubeTranscriptResponse(BaseModel):
     
 class YouTubeTranscriptRequest(BaseModel):
     video_url: str
+    
+class TranslationRequest(BaseModel):
+    text: str
+    target_language: str
+
+class TranslationResponse(BaseModel):
+    translated_text: str
