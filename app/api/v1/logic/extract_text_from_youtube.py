@@ -3,8 +3,6 @@ from typing import Dict
 import re
 from youtube_transcript_api._api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
-import asyncio
-import requests
 
 API_KEY = "a03dc5f7e87341fe8eb2e1f362e9f5b8"
 
