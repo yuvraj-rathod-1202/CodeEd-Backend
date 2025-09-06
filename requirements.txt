@@ -18,3 +18,4 @@ python-pptx
 pytesseract
 pydub
 SpeechRecognition
+ffmpeg-python

@@ -9,6 +9,7 @@ import pytesseract
 from io import BytesIO
 import speech_recognition as sr
 from pydub import AudioSegment
+import ffmpeg
 
 async def extract_text_from_pdf_logic(pdf_file) -> Dict[str, str]:
     if not pdf_file.filename.endswith(".pdf"):
@@ -180,6 +181,36 @@ async def extract_text_from_audio_logic(audio_file) -> Dict[str, str]:
         raise HTTPException(status_code=500, detail=f"Please upload small audio")
     return {"text": cleaned_text}
 
+async def extract_text_from_video_logic(video_file) -> Dict[str, str]:
+    if not (video_file.filename.endswith(".mp4") or video_file.filename.endswith(".mov") or video_file.filename.endswith(".avi")):
+        raise HTTPException(status_code=400, detail="Only MP4, MOV, and AVI files are allowed.")
+    
+    file_content = await video_file.read()
+    try:
+        temp_audio = BytesIO()
+        (
+            ffmpeg
+            .input('pipe:0')
+            .output('pipe:1', format='wav', acodec='pcm_s16le', ac=1, ar='16000')
+            .run(input=file_content, capture_stdout=True, capture_stderr=True, stdout=temp_audio)
+        )
+        temp_audio.seek(0)
+
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(temp_audio) as source:
+            audio_data = recognizer.record(source)
+            extracted_text = recognizer.recognize_google(audio_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing video: {str(e)}")
+    
+    cleaned_text = extracted_text.replace("\n", " ").replace("\r", " ").strip()
+    print("length of text", len(cleaned_text))
+    if(len(cleaned_text) == 0):
+        raise HTTPException(status_code=500, detail=f"no text found in video")
+    if(len(cleaned_text) > 100000):
+        raise HTTPException(status_code=500, detail=f"Please upload small video")
+    return {"text": cleaned_text}
+
 async def extract_text_logic(file) -> Dict[str, str]:
     if file.filename.endswith(".pdf"):
         textObj = await extract_text_from_pdf_logic(file)
@@ -208,5 +239,13 @@ async def extract_text_logic(file) -> Dict[str, str]:
     if file.filename.endswith(".png") or file.filename.endswith(".jpg") or file.filename.endswith(".jpeg"):
         textObj = await extract_text_from_image_logic(file)
         return textObj
+    
+    if file.filename.endswith(".wav") or file.filename.endswith(".mp3") or file.filename.endswith(".m4a"):
+        textObj = await extract_text_from_audio_logic(file)
+        return textObj
+    
+    if file.filename.endswith(".mp4") or file.filename.endswith(".mov") or file.filename.endswith(".avi"):
+        textObj = await extract_text_from_video_logic(file)
+        return textObj
 
-    return {"text": "No valid file format found. Please upload a PDF, DOCX, HTML, TXT, PPTX, IMAGE or MD file."}
+    return {"text": "No valid file format found. Please upload a PDF, DOCX, HTML, TXT, PPTX, IMAGE, Audio, Video or MD file."}
