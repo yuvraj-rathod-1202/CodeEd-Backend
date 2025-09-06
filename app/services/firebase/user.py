@@ -4,10 +4,10 @@ from app.models.BaseModel.personalized.personal import Personalized_User_Content
 def extract_personalized_user(user_data) -> Personalized_User_Content:
     return Personalized_User_Content(
         country=getattr(user_data, "country", "Unknown"),
-        goal=getattr(user_data, "goal", "General Learning"),
-        experience=getattr(user_data, "experience", "Beginner"),
-        interests=getattr(user_data, "interests", ["General"]),
-        education=getattr(user_data, "education", "Not Specified"),
+        primaryGoal=getattr(user_data, "primaryGoal", "General Learning"),
+        studyTime=getattr(user_data, "studyTime", "1-2 hours per week"),
+        subjectsOfInterest=getattr(user_data, "subjectsOfInterest", ["General"]),
+        educationLevel=getattr(user_data, "educationLevel", "Not Specified"),
     )
 
 class UserService:
@@ -25,8 +25,8 @@ class UserService:
             return extract_personalized_user(user)
         return Personalized_User_Content(
             country="Unknown",
-            goal="General Learning",
-            experience="Beginner",
-            interests=["General"],
-            education="Not Specified"
+            primaryGoal="General Learning",
+            studyTime="1-2 hours per week",
+            subjectsOfInterest=["General"],
+            educationLevel="Not Specified"
         )

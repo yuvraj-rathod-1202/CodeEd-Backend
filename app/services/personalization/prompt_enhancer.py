@@ -371,17 +371,17 @@ def get_user_context_string(userId: Optional[str] = None, user_context: Optional
         # Create context string
         context_parts = []
         
-        if user_info.experience != "Not Specified":
-            context_parts.append(f"Experience Level: {user_info.experience}")
-        
-        if user_info.goal != "General Learning":
-            context_parts.append(f"Learning Goal: {user_info.goal}")
-        
-        if user_info.education != "Not Specified":
-            context_parts.append(f"Educational Background: {user_info.education}")
-        
-        if user_info.interests and user_info.interests != ["General"]:
-            interests_str = ", ".join(user_info.interests)
+        if user_info.studyTime != "Not Specified":
+            context_parts.append(f"Study Time: {user_info.studyTime}")
+
+        if user_info.primaryGoal != "General Learning":
+            context_parts.append(f"Learning Goal: {user_info.primaryGoal}")
+
+        if user_info.educationLevel != "Not Specified":
+            context_parts.append(f"Educational Background: {user_info.educationLevel}")
+
+        if user_info.subjectsOfInterest and user_info.subjectsOfInterest != ["General"]:
+            interests_str = ", ".join(user_info.subjectsOfInterest)
             context_parts.append(f"Areas of Interest: {interests_str}")
         
         if user_info.country != "Unknown":
@@ -431,40 +431,78 @@ def get_personalization_instructions(userId: Optional[str] = None, user_context:
         
         instructions = []
         
-        # Experience-based instructions
-        if user_info.experience == "Beginner":
-            instructions.append("Use simple, beginner-friendly language and provide extra explanations for technical terms")
-        elif user_info.experience == "Intermediate":
-            instructions.append("Use moderately technical language and provide balanced detail")
-        elif user_info.experience == "Advanced":
-            instructions.append("Use advanced terminology and focus on deeper insights")
-        
-        # Goal-based instructions
-        if "exam" in user_info.goal.lower() or "test" in user_info.goal.lower():
-            instructions.append("Focus on testable concepts and include exam-style questions")
-        elif "career" in user_info.goal.lower() or "job" in user_info.goal.lower():
-            instructions.append("Emphasize practical applications and real-world scenarios")
-        elif "research" in user_info.goal.lower():
-            instructions.append("Include detailed analysis and references to further study")
-        elif "hobby" in user_info.goal.lower() or "personal interest" in user_info.goal.lower():
-            instructions.append("Make the content engaging and fun, with interesting examples")
-        elif "general learning" in user_info.goal.lower():
+        if user_info.primaryGoal == "Improve Study Efficiency":
+            instructions.append("Focus on concise explanations and practical tips to enhance study habits")
+        elif user_info.primaryGoal == "Create Study Materials":
+            instructions.append("Provide templates and examples for effective study materials")
+        elif user_info.primaryGoal == "Language Learning":
+            instructions.append("Incorporate language practice exercises and real-world examples")
+        elif user_info.primaryGoal == "Exam Preparation":
+            instructions.append("Focus on high-yield concepts and practice questions")
+        elif user_info.primaryGoal == "Research and Summarization":
+            instructions.append("Provide guidance on effective research methods and summarization techniques")
+        elif user_info.primaryGoal == "Homework Assistance":
+            instructions.append("Offer step-by-step solutions and explanations for homework problems")
+        elif user_info.primaryGoal == "Professional Development":
+            instructions.append("Include industry-relevant examples and case studies")
+        elif user_info.primaryGoal == "General Knowledge Enhancement":
             instructions.append("Provide a broad overview of concepts and encourage exploration")
 
+        # Experience-based instructions
+        if user_info.studyTime == 'Less than 1 hour':
+            instructions.append("Provide quick, focused content that can be consumed in short bursts")
+        elif user_info.studyTime == '1-2 hours':
+            instructions.append("Offer a mix of concise explanations and deeper dives into key concepts")
+        elif user_info.studyTime == '2-4 hours':
+            instructions.append("Include comprehensive coverage of topics with practical examples")
+        elif user_info.studyTime == '4-6 hours':
+            instructions.append("Provide in-depth analysis and encourage hands-on practice")
+        elif user_info.studyTime == '6-8 hours':
+            instructions.append("Offer extensive resources and support for sustained learning")
+        elif user_info.studyTime == 'More than 8 hours':
+            instructions.append("Encourage exploration of advanced topics and independent research")
+        elif user_info.studyTime == 'Varies significantly':
+            instructions.append("Adapt content to the user's specific study time availability")
+
+        # Goal-based instructions
+        if user_info.primaryGoal == 'Improve Study Efficiency':
+            instructions.append("Focus on concise explanations and practical tips to enhance study habits")
+        elif user_info.primaryGoal == 'Create Study Materials':
+            instructions.append("Provide templates and examples for effective study materials")
+        elif user_info.primaryGoal == 'Language Learning':
+            instructions.append("Incorporate language practice exercises and real-world examples")
+        elif user_info.primaryGoal == 'Exam Preparation':
+            instructions.append("Focus on high-yield concepts and practice questions")
+        elif user_info.primaryGoal == 'Research and Summarization':
+            instructions.append("Provide guidance on effective research methods and summarization techniques")
+        elif user_info.primaryGoal == 'Homework Assistance':
+            instructions.append("Offer step-by-step solutions and explanations for homework problems")
+        elif user_info.primaryGoal == 'Professional Development':
+            instructions.append("Include resources for skill development and career advancement")
+        elif user_info.primaryGoal == 'General Knowledge Enhancement':
+            instructions.append("Provide a broad overview of topics and encourage exploration")
+
         # Education-based instructions
-        if "high school" in user_info.education.lower():
+        if user_info.educationLevel == 'Middle School (6th-8th Grade)':
+            instructions.append("Use age-appropriate language and examples relatable to middle school students")
+        elif user_info.educationLevel == 'High School (9th-12th Grade)':
             instructions.append("Relate concepts to high school level understanding")
-        elif "bachelor" in user_info.education.lower():
+        elif user_info.educationLevel == 'College/University Student':
             instructions.append("Use undergraduate level concepts and examples")
-        elif "master" in user_info.education.lower() or "phd" in user_info.education.lower():
+        elif user_info.educationLevel == 'Graduate Student':
             instructions.append("Include advanced concepts and theoretical frameworks")
-        elif "self-taught" in user_info.education.lower():
-            instructions.append("Provide clear, step-by-step explanations suitable for self-learners")
-        
-        
+        elif user_info.educationLevel == 'Working Professional':
+            instructions.append("Incorporate industry-relevant examples and case studies")
+        elif user_info.educationLevel == 'Lifelong Learner':
+            instructions.append("Provide resources for self-directed learning and exploration")
+        elif user_info.educationLevel == 'Educator/Teacher':
+            instructions.append("Include pedagogical strategies and teaching resources")
+        elif user_info.educationLevel == 'Other':
+            instructions.append("Adapt content to suit the user's unique background and needs")
+
         # Interest-based instructions
-        if user_info.interests and user_info.interests != ["General"]:
-            interests_str = ", ".join(user_info.interests)
+        if user_info.subjectsOfInterest and user_info.subjectsOfInterest != ["General"]:
+            interests_str = ", ".join(user_info.subjectsOfInterest)
             instructions.append(f"When possible, relate concepts to the user's interests: {interests_str}")
         
         # Add quiz-based personalization

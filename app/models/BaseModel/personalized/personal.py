@@ -44,10 +44,10 @@ class Personalized_Flashcard_Content(BaseModel):
 
 class Personalized_User_Content(BaseModel):
     country: str
-    goal: str
-    experience: str
-    interests: List[str]
-    education: str
+    primaryGoal: str
+    studyTime: str
+    subjectsOfInterest: List[str]
+    educationLevel: str
     
     
 class Personalized_Content(BaseModel):

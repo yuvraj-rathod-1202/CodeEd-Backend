@@ -52,10 +52,10 @@ def get_personalized_content(userId: str) -> Personalized_Content:
         return Personalized_Content(
             personalized_info=Personalized_User_Content(
                 country="Unknown",
-                goal="General Learning",
-                experience="Beginner",
-                interests=["General"],
-                education="Not Specified"
+                primaryGoal="General Learning",
+                studyTime="1-2 hours per week",
+                subjectsOfInterest=["General"],
+                educationLevel="Not Specified"
             ),
             personalized_quiz=Personalized_Quiz_Content(quizzes=[]),
             personalized_flowchart=Personalized_Flowchart_Content(flowcharts=[]),

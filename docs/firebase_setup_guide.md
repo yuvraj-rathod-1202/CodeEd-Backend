@@ -157,11 +157,10 @@ For your application, consider this Firestore structure:
 ```
 /users/{userId}
   - country: string
-  - goal: string
-  - experience: string
-  - interests: array
-  - education: string
-  - created_at: timestamp
+  - primaryGoal: string
+  - studyTime: string
+  - subjectsOfInterest: array
+  - educationLevel: string
 
 /quizzes/{quizId}
   - userId: string
