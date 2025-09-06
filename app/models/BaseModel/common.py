@@ -25,6 +25,7 @@ class YouTubeTranscriptRequest(BaseModel):
 class TranslationRequest(BaseModel):
     text: str
     target_language: str
+    userId: Optional[str] = None  # For personalization
 
 class TranslationResponse(BaseModel):
     translated_text: str

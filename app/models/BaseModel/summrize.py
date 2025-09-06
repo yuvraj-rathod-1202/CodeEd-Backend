@@ -18,3 +18,4 @@ class summarize_textRequest(BaseModel):
     text: str
     format: str = "paragraph"  # "paragraph" or "bullet_points"
     length: str = "medium"  # "small", "medium", or "large"
+    userId: Optional[str] = None  # For personalization

@@ -15,3 +15,4 @@ class flowchart_response(BaseModel):
 class flowchart_request(BaseModel):
     text: str
     instruction: Optional[str] = None  # Optional instruction for flowchart generation
+    userId: Optional[str] = None  # Optional user ID for personalization
