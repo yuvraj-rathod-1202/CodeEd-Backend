@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import asyncio
 import random
+from readability import Document
 
 user_agents = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
@@ -24,17 +25,24 @@ async def scrape_web_page(url: str) -> str:
         headers = {
             'User-Agent': random.choice(user_agents)
         }
-        html = requests.get(url, headers=headers, timeout=10)
-        soup = BeautifulSoup(html.text, 'html.parser')
-        # print("Full HTML content:", soup.prettify()[:1000])  # Print first 1000 characters of HTML
-        body = soup.find('body')
-        # print("Body content:", body)
-        soup = BeautifulSoup(str(body), 'html.parser')
-        for script in soup(["script", "style"]):
-            script.extract()  # Remove these two elements from the BS4 object
-        for script in soup(["nav", "footer", "aside", "header"]):
-            script.extract()
-        cleaned_text = soup.get_text(separator='\n')
+        # html = requests.get(url, headers=headers, timeout=10)
+        # soup = BeautifulSoup(html.text, 'html.parser')
+        # # print("Full HTML content:", soup.prettify()[:1000])  # Print first 1000 characters of HTML
+        # body = soup.find('body')
+        # # print("Body content:", body)
+        # soup = BeautifulSoup(str(body), 'html.parser')
+        # for script in soup(["script", "style"]):
+        #     script.extract()  # Remove these two elements from the BS4 object
+        # for script in soup(["nav", "footer", "aside", "header"]):
+        #     script.extract()
+        # cleaned_text = soup.get_text(separator='\n')
+        # cleaned_text = ' '.join([line.strip() for line in cleaned_text.splitlines() if line.strip()])
+        
+        html = requests.get(url, headers=headers, timeout=10).text
+        doc = Document(html)
+        cleaned_html = doc.summary()   # HTML of main content
+        cleaned_text = BeautifulSoup(cleaned_html, 'html.parser').get_text(separator="\n")
+        cleaned_html.replace('\n', ' ')
         cleaned_text = ' '.join([line.strip() for line in cleaned_text.splitlines() if line.strip()])
         return cleaned_text
     except Exception as e:
@@ -64,5 +72,6 @@ async def scrape_web_page_logic(url: str) -> str:
         return "Error: URL points to a document. Please use the document upload feature."
     print("Starting to scrape URL:", url)
     text = await run_with_timeout(url, timeout=10)
-    print("Scraped text:", text)
+    # print("Scraped text:", text)
+    print("Scraped text length:", len(text))
     return text
