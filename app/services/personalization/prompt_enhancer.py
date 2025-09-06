@@ -466,6 +466,6 @@ def enhance_prompt_with_personalization(base_prompt: str, userId: Optional[str] 
     personalized_prefix = create_personalized_prompt_prefix(userId, user_personalization_context)
     
     if personalized_prefix:
-        return personalized_prefix + "\n" + base_prompt
-    
+        return personalized_prefix + "\nYOUR TASK:\n" + base_prompt
+
     return base_prompt
