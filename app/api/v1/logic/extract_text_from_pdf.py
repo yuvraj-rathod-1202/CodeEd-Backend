@@ -212,6 +212,9 @@ async def extract_text_from_video_logic(video_file) -> Dict[str, str]:
     return {"text": cleaned_text}
 
 async def extract_text_logic(file) -> Dict[str, str]:
+    if file.size > 10 * 1024 * 1024:  # 10 MB
+        return {"text": "File size exceeds the 10MB limit. Please upload a smaller file."}
+    
     if file.filename.endswith(".pdf"):
         textObj = await extract_text_from_pdf_logic(file)
         return textObj
