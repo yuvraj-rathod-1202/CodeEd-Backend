@@ -8,7 +8,8 @@ from app.models.BaseModel.mongo.Schema import UserResponse, User
 from app.api.v1.logic.generate_questions import generate_question_logic
 from app.api.v1.logic.extract_text_from_pdf import extract_text_from_pdf_logic
 from app.api.v1.logic.scrape_web_page import scrape_web_page_logic
-from app.models.BaseModel.common import scrapedWebPageResponse, scrapedWebPageRequest
+from app.models.BaseModel.common import scrapedWebPageResponse, scrapedWebPageRequest, YouTubeTranscriptRequest, YouTubeTranscriptResponse
+from app.api.v1.logic.extract_text_from_youtube import extract_text_from_youtube_logic
 
 router = APIRouter()
 
@@ -26,10 +27,10 @@ async def extract_text_from_pdf(pdf_file: UploadFile = File(...)):
     print(f"Received file: {pdf_file.filename}")
     return await extract_text_from_pdf_logic(pdf_file)
 
-@router.post('/get-youtube-transcript')
-async def get_youtube_transcript(video_url: str):
-    # Logic to get YouTube transcript goes here
-    return {"transcript": "This is a dummy transcript."}
+@router.post('/get-youtube-transcript', response_model=YouTubeTranscriptResponse)
+async def get_youtube_transcript(request: YouTubeTranscriptRequest):
+    text = await extract_text_from_youtube_logic(request.video_url)
+    return YouTubeTranscriptResponse(text=text["text"])
 
 @router.post('/get-webpage-text', response_model=scrapedWebPageResponse)
 async def get_webpage_text(request: scrapedWebPageRequest):

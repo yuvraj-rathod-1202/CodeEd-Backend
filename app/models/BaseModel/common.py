@@ -15,3 +15,9 @@ class scrapedWebPageResponse(BaseModel):
 
 class scrapedWebPageRequest(BaseModel):
     url: str
+    
+class YouTubeTranscriptResponse(BaseModel):
+    text: str
+    
+class YouTubeTranscriptRequest(BaseModel):
+    video_url: str

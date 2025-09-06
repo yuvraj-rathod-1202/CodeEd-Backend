@@ -36,70 +36,26 @@ async def extract_text(video_id: str) -> str:
     """
     
     # First, try to get existing YouTube captions (fastest method)
-    # try:
-    #     print("Trying to get YouTube captions...")
-    #     transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-    #     print("Raw transcript list:", transcript_list)
-    #     transcript_text = " ".join([entry['text'] for entry in transcript_list])
-        
-    #     if transcript_text.strip():
-    #         print("Using YouTube captions (fast method)")
-    #         return transcript_text
-            
-    # except (TranscriptsDisabled, NoTranscriptFound):
-    #     print("No YouTube captions available, using AssemblyAI...")
-    # except VideoUnavailable:
-    #     raise HTTPException(
-    #         status_code=404, 
-    #         detail="Video is unavailable or does not exist."
-    #     )
-    
-    # # Fallback to AssemblyAI for transcription
     try:
-        print("Uploading video to AssemblyAI...")
-        upload_res = requests.post(
-            'https://api.assemblyai.com/v2/transcript',
-            json={"video_url": f"https://www.youtube.com/watch?v={video_id}"},
-            headers={"Authorization": API_KEY}
-        )
+        print("Trying to get YouTube captions...")
+        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+        # print("Raw transcript list:", transcript_list)
+        transcript_text = " ".join([entry['text'] for entry in transcript_list])
         
-        transcript_id = upload_res.json().get('id')
-        
-        # Poll with timeout (max 5 minutes)
-        max_attempts = 100  # 5 minutes with 3-second intervals
-        attempts = 0
-        
-        while attempts < max_attempts:
-            status_res = requests.get(
-                f'https://api.assemblyai.com/v2/transcript/{transcript_id}',
-                headers={"Authorization": API_KEY}
-            )
-            text = status_res.json().get('text')
-            print("Polling AssemblyAI, attempt", attempts + 1, "text", text)
-            status = status_res.json().get('status')
+        if transcript_text.strip():
+            print("Using YouTube captions (fast method)")
+            return transcript_text
+        else:
+            return "No YouTube captions available, using AssemblyAI..."
             
-            if status == 'completed':
-                return status_res.json().get('text')
-            elif status == 'failed':
-                raise HTTPException(
-                    status_code=500,
-                    detail="Failed to transcribe video with AssemblyAI."
-                )
-            
-            attempts += 1
-            await asyncio.sleep(1)  # Reduced from 3 to 1 second
-
-        # Timeout reached
-        raise HTTPException(
-            status_code=408,
-            detail="Transcription is taking too long. Please try with a shorter video."
-        )
-
+    except TranscriptsDisabled:
+        return "Error: Transcripts are disabled for this video."
+    except NoTranscriptFound:
+        return "Error: No transcript available for this video."
+    except VideoUnavailable:
+        return "Error: The video is unavailable."
     except Exception as e:
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Failed to extract text from video: {str(e)}"
-        )
+        return f"Unexpected error: {e}"
 
 async def extract_text_from_youtube_logic(video_url: str) -> Dict[str, str]:
     """
@@ -133,10 +89,9 @@ async def extract_text_from_youtube_logic(video_url: str) -> Dict[str, str]:
     
     if len(cleaned_text) == 0:
         raise HTTPException(status_code=500, detail="No text found in the YouTube video.")
-    if len(cleaned_text) > 50000:
-        raise HTTPException(status_code=500, detail="Please provide a shorter video or URL.")
     
-    return {"text": cleaned_text}
+
+    return {"text": cleaned_text[:100000]}
 
 
 # urls = [
@@ -147,10 +102,10 @@ async def extract_text_from_youtube_logic(video_url: str) -> Dict[str, str]:
 #     "https://www.youtube.com/shorts/dQw4w9WgXcQ"
 # ]
 
-async def test():
-    # Test the function with a sample URL
-    video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-    result = await extract_text_from_youtube_logic(video_url)
-    print(result)
+# async def test():
+#     # Test the function with a sample URL
+#     video_url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+#     result = await extract_text_from_youtube_logic(video_url)
+#     print(result)
 
-asyncio.run(test())
+# asyncio.run(test())
