@@ -14,8 +14,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,  # Allow all origins for development; adjust in production
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin", "Access-Control-Allow-Origin"],
 )
 
 @app.on_event("startup")
