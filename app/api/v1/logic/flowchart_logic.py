@@ -75,7 +75,7 @@ class FlowchartGenerator:
         7. Ensure all referenced indices exist in the nodes array
         8. Make the flowchart educational and easy to follow
         
-        Flowchart Language: {language} (the main language should be {language}, but some English words are also acceptable)
+        ⚠️ CRITICAL LANGUAGE REQUIREMENT: You MUST respond STRICTLY in {language}. All node labels, title, and content must be written in {language} only. This is a strict requirement - follow it without exception.
 
         Return ONLY the JSON response, no additional text or formatting.
         """

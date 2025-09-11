@@ -54,7 +54,7 @@ IMPORTANT RULES:
 - Include context when necessary for clarity
 - Make sure each flashcard is self-contained and understandable
 
-Flashcard Language: {language} (the main language should be {language}, but some English words are also acceptable)
+⚠️ CRITICAL LANGUAGE REQUIREMENT: You MUST respond STRICTLY in {language}. All node labels, title, and content must be written in {language} only. This is a strict requirement - follow it without exception.
 
 Text to create flashcards from:
 {text}
