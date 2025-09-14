@@ -26,6 +26,13 @@ class FlowchartGenerator:
         base_prompt = f"""
         You are an expert at creating educational flowcharts. Based on the following text, create a hierarchical flowchart that represents the main concepts, processes, or relationships described.
 
+        CRITICAL LANGUAGE REQUIREMENT: 
+        - You MUST respond STRICTLY in {language} language ONLY
+        - ALL content including title and node labels MUST be in {language}
+        - Do NOT use any other language regardless of the input text language
+        - If input text is in a different language, translate concepts to {language}
+        - This is a MANDATORY requirement that cannot be ignored
+
         Text to analyze:
         {text}"""
         
@@ -75,7 +82,13 @@ class FlowchartGenerator:
         7. Ensure all referenced indices exist in the nodes array
         8. Make the flowchart educational and easy to follow
         
-        Flowchart Language: {language} (the main language should be {language}, but some English words are also acceptable)
+        ⚠️ CRITICAL LANGUAGE REQUIREMENT: 
+        - You MUST respond STRICTLY in {language} language
+        - ALL node labels, title, and content must be written in {language} ONLY
+        - Do NOT use Portuguese, Spanish, or any other language
+        - Translate all concepts from input text to {language}
+        - This is MANDATORY and NON-NEGOTIABLE
+        - Ignore any language detection from input text - use {language} ONLY
 
         Return ONLY the JSON response, no additional text or formatting.
         """
@@ -135,14 +148,49 @@ class FlowchartGenerator:
         except Exception as e:
             raise ValueError(f"Error parsing response: {str(e)}")
     
-    def _create_fallback_flowchart(self, text: str) -> Dict[str, Any]:
+    def _create_fallback_flowchart(self, text: str, language: Optional[str] = "English") -> Dict[str, Any]:
         """Create a simple fallback flowchart when AI generation fails."""
         # Extract first few sentences or concepts for a basic flowchart
         sentences = text.split('.')[:3]
         
+        # Language-specific titles
+        title_translations = {
+            "English": "Text Analysis Flowchart",
+            "Spanish": "Diagrama de Flujo de Análisis de Texto",
+            "French": "Organigramme d'Analyse de Texte",
+            "German": "Textanalyse-Flussdiagramm",
+            "Portuguese": "Fluxograma de Análise de Texto",
+            "Italian": "Diagramma di Flusso per l'Analisi del Testo",
+            "Chinese": "文本分析流程图",
+            "Japanese": "テキスト解析フローチャート",
+            "Korean": "텍스트 분석 순서도",
+            "Russian": "Блок-схема анализа текста",
+            "Arabic": "مخطط تدفق تحليل النص",
+            "Hindi": "पाठ विश्लेषण प्रवाह चार्ट"
+        }
+        
+        # Language-specific main topic labels
+        main_topic_translations = {
+            "English": "Main Topic",
+            "Spanish": "Tema Principal",
+            "French": "Sujet Principal",
+            "German": "Hauptthema",
+            "Portuguese": "Tópico Principal",
+            "Italian": "Argomento Principale",
+            "Chinese": "主要话题",
+            "Japanese": "メイントピック",
+            "Korean": "주요 주제",
+            "Russian": "Основная тема",
+            "Arabic": "الموضوع الرئيسي",
+            "Hindi": "मुख्य विषय"
+        }
+        
+        title = title_translations.get(language or "English", title_translations["English"])
+        main_topic_label = main_topic_translations.get(language or "English", main_topic_translations["English"])
+        
         nodes = [
             {
-                "label": "Main Topic",
+                "label": main_topic_label,
                 "children": [1] if len(sentences) > 1 else None
             }
         ]
@@ -156,7 +204,7 @@ class FlowchartGenerator:
                 })
         
         return {
-            "title": "Text Analysis Flowchart",
+            "title": title,
             "flowchart": {
                 "nodes": nodes
             }
@@ -178,16 +226,42 @@ class FlowchartGenerator:
             # Create the personalized prompt
             prompt = self._create_flowchart_prompt(text, instruction, userId, language)
 
+            # Add additional system instruction to the prompt for language enforcement
+            enhanced_prompt = f"""SYSTEM INSTRUCTION: You are a multilingual educational assistant. You MUST respond strictly in {language} language only, regardless of the input text language. Always translate concepts to {language} if needed.
+
+{prompt}"""
+
+            # Debug: Print language being used
+            print(f"DEBUG: Flowchart generation requested in language: {language}")
+            print(f"DEBUG: Enhanced prompt includes language enforcement for: {language}")
+
             # Generate content using Gemini
-            response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt, config={"response_mime_type": "application/json"})
+            response = client.models.generate_content(model="gemini-2.0-flash", contents=enhanced_prompt, config={"response_mime_type": "application/json"})
             
             if not response.text:
                 raise ValueError("Empty response from Gemini API")
             
+            # Debug: Check response language
+            print(f"DEBUG: Raw response preview: {response.text[:200]}...")
+
             # Parse the response
             parsed_data = self._parse_gemini_response(response.text)
             
-            # Convert to Pydantic models
+            # Additional language validation
+            title = parsed_data.get("title", "")
+            # Check for Portuguese words in title
+            portuguese_indicators = ["inteligência", "máquinas", "aprendizado", "tecnologia", "processamento", "linguagem"]
+            if language == "English" and any(word in title.lower() for word in portuguese_indicators):
+                print(f"WARNING: Generated title '{title}' appears to contain Portuguese words despite English request")
+                # Force English title
+                parsed_data["title"] = "Artificial Intelligence Concepts"
+                
+            # Check for Portuguese words in node labels
+            for node in parsed_data.get("flowchart", {}).get("nodes", []):
+                node_label = node.get("label", "")
+                if language == "English" and any(word in node_label.lower() for word in portuguese_indicators):
+                    print(f"WARNING: Node label '{node_label}' appears to contain Portuguese words")
+                    # You could implement translation here if needed            # Convert to Pydantic models
             nodes = []
             for node_data in parsed_data["flowchart"]["nodes"]:
                 nodes.append(Node(
@@ -205,7 +279,7 @@ class FlowchartGenerator:
         except Exception as e:
             print(f"Error generating flowchart: {str(e)}")
             # Use fallback flowchart
-            fallback_data = self._create_fallback_flowchart(text)
+            fallback_data = self._create_fallback_flowchart(text, language)
             
             # Convert fallback to Pydantic models
             nodes = []

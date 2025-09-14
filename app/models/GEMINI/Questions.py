@@ -66,7 +66,7 @@ Each question should match the structure below:
 - Ensure that the quiz **adds value** — by either introducing a new insight or reinforcing important ideas in an interesting way.
 - The goal is not just assessment, but to **make the user feel smarter and curious to explore more**.
 
-Quiz Language: {language} (the main language should be {language}, but some English words are also acceptable)
+⚠️ CRITICAL LANGUAGE REQUIREMENT: You MUST respond STRICTLY in {language}. All node labels, title, and content must be written in {language} only. This is a strict requirement - follow it without exception.
 
 Context:
 {text}
@@ -117,7 +117,7 @@ Context:
         base_prompt = f"""Generate a concise and engaging title for a quiz based on the following context:
 {text}
 
-Title Language: {language} (the main language should be {language}, but some English words are also acceptable)
+⚠️ CRITICAL LANGUAGE REQUIREMENT: You MUST respond STRICTLY in {language}. All node labels, title, and content must be written in {language} only. This is a strict requirement - follow it without exception.
 
 The title should be catchy, relevant, and reflect the main theme or topic of the content. It should not exceed 10 words and should be suitable for a quiz format.
 Return only the title as a string without any additional text or formatting.

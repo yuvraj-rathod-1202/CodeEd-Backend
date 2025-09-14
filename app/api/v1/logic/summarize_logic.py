@@ -105,7 +105,7 @@ class TextSummarizer:
             Text to summarize:
             {text}
 
-            Summary Language: {language} (the main language should be {language}, but some English words are also acceptable)
+            ⚠️ CRITICAL LANGUAGE REQUIREMENT: You MUST respond STRICTLY in {language}. All node labels, title, and content must be written in {language} only. This is a strict requirement - follow it without exception.
 
             Please respond in JSON format with:
             {{
@@ -209,7 +209,7 @@ class TextSummarizer:
             Summaries to combine:
             {combined_text}
 
-            Summary Language: {language} (the main language should be {language}, but some English words are also acceptable)
+            ⚠️ CRITICAL LANGUAGE REQUIREMENT: You MUST respond STRICTLY in {language}. All node labels, title, and content must be written in {language} only. This is a strict requirement - follow it without exception.
 
             Please respond in JSON format with:
             {{
