@@ -25,25 +25,24 @@ async def scrape_web_page(url: str) -> str:
         headers = {
             'User-Agent': random.choice(user_agents)
         }
-        # html = requests.get(url, headers=headers, timeout=10)
-        # soup = BeautifulSoup(html.text, 'html.parser')
-        # # print("Full HTML content:", soup.prettify()[:1000])  # Print first 1000 characters of HTML
-        # body = soup.find('body')
-        # # print("Body content:", body)
-        # soup = BeautifulSoup(str(body), 'html.parser')
-        # for script in soup(["script", "style"]):
-        #     script.extract()  # Remove these two elements from the BS4 object
-        # for script in soup(["nav", "footer", "aside", "header"]):
-        #     script.extract()
-        # cleaned_text = soup.get_text(separator='\n')
-        # cleaned_text = ' '.join([line.strip() for line in cleaned_text.splitlines() if line.strip()])
-        
-        html = requests.get(url, headers=headers, timeout=10).text
-        doc = Document(html)
-        cleaned_html = doc.summary()   # HTML of main content
-        cleaned_text = BeautifulSoup(cleaned_html, 'html.parser').get_text(separator="\n")
-        cleaned_html.replace('\n', ' ')
+        html = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(html.text, 'html.parser')
+        # print("Full HTML content:", soup.prettify()[:1000])  # Print first 1000 characters of HTML
+        body = soup.find('body')
+        # print("Body content:", body)
+        soup = BeautifulSoup(str(body), 'html.parser')
+        for script in soup(["script", "style"]):
+            script.extract()  # Remove these two elements from the BS4 object
+        for script in soup(["nav", "footer", "aside", "header"]):
+            script.extract()
+        cleaned_text = soup.get_text(separator='\n')
         cleaned_text = ' '.join([line.strip() for line in cleaned_text.splitlines() if line.strip()])
+        
+        # html = requests.get(url, headers=headers, timeout=10)
+        # cleaned_text = BeautifulSoup(html.text, 'html.parser').get_text(separator="\n")
+        # cleaned_text = BeautifulSoup(cleaned_text, 'html.parser').get_text(separator="\n")
+        # cleaned_text = cleaned_text.replace('\n', ' ')
+        # cleaned_text = ' '.join([line.strip() for line in cleaned_text.splitlines() if line.strip()])
         return cleaned_text
     except Exception as e:
         print("Error scraping webpage:", e)
