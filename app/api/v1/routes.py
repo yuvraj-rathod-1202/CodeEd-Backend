@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.models.BaseModel.generateQuestionsBaseModel import generateQuestionRequest, generateQuestionResponse
 from app.models.BaseModel.summrize import summarize_textRequest, summarize_textResponse
 from app.models.BaseModel.flowchart import flowchart_request, flowchart_response
@@ -22,8 +22,31 @@ async def generateQuestion(request: generateQuestionRequest):
 
 @router.post('/extract-text')
 async def extract_text_from_pdf(file: UploadFile = File(...)):
-    print(f"Received file: {file.filename}")
-    return await extract_text_logic(file)
+    try:
+        print(f"Received file: {file.filename}, size: {file.size} bytes")
+        
+        # Additional file validation
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No filename provided")
+            
+        if file.size == 0:
+            raise HTTPException(status_code=400, detail="File is empty")
+            
+        result = await extract_text_logic(file)
+        
+        # Log successful processing
+        print(f"Successfully processed file: {file.filename}")
+        
+        return result
+        
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions
+    except Exception as e:
+        print(f"Unexpected error in extract-text endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"An unexpected error occurred while processing the file: {str(e)}"
+        )
 
 @router.post('/get-youtube-transcript', response_model=YouTubeTranscriptResponse)
 async def get_youtube_transcript(request: YouTubeTranscriptRequest):
