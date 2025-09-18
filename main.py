@@ -27,3 +27,6 @@ async def statup_event():
 
 app.include_router(router, prefix='/api/v1')
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
