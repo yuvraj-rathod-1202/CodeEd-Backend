@@ -5,19 +5,26 @@ import requests
 import time
 import random
 import json
+import xml.etree.ElementTree as ET
 from youtube_transcript_api._api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound, VideoUnavailable
 
 # Alternative approach using direct API calls
 def get_transcript_alternative(video_id: str) -> str:
     """
-    Alternative method to get transcript using direct requests to avoid IP blocking
+    Alternative method to get transcript using direct requests to avoid browser blocking
     """
     try:
-        # Use different endpoints and headers to avoid detection
-        headers = get_random_headers()
+        # Method 1: Use YouTube's mobile API endpoint (less restrictive)
+        mobile_headers = {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive'
+        }
         
-        # Alternative approach using YouTube's internal API
+        # Try YouTube's timedtext API with mobile headers
         url = f"https://www.youtube.com/api/timedtext"
         params = {
             'v': video_id,
@@ -28,7 +35,7 @@ def get_transcript_alternative(video_id: str) -> str:
         # Add some randomization to avoid detection
         time.sleep(random.uniform(0.5, 2.0))
         
-        response = requests.get(url, params=params, headers=headers, timeout=10)
+        response = requests.get(url, params=params, headers=mobile_headers, timeout=15)
         
         if response.status_code == 200:
             try:
@@ -46,27 +53,70 @@ def get_transcript_alternative(video_id: str) -> str:
             except:
                 pass
         
-        # Try another approach with different parameters
-        params = {
-            'v': video_id,
-            'lang': 'en-US',
-            'fmt': 'srv3'
-        }
+        # Method 2: Try different parameters and endpoints
+        alternative_params = [
+            {'v': video_id, 'lang': 'en-US', 'fmt': 'srv3'},
+            {'v': video_id, 'lang': 'en', 'fmt': 'srv1'},
+            {'v': video_id, 'lang': 'en', 'fmt': 'ttml'},
+            {'v': video_id, 'tlang': 'en'}
+        ]
         
-        response = requests.get(url, params=params, headers=headers, timeout=10)
-        
-        if response.status_code == 200 and response.text:
-            # Parse XML response
-            import xml.etree.ElementTree as ET
+        for params in alternative_params:
             try:
-                root = ET.fromstring(response.text)
-                text_elements = root.findall('.//text')
-                transcript_text = " ".join([elem.text for elem in text_elements if elem.text])
+                time.sleep(random.uniform(0.3, 1.0))
+                response = requests.get(url, params=params, headers=mobile_headers, timeout=10)
                 
-                if transcript_text.strip():
-                    return transcript_text.strip()
-            except:
-                pass
+                if response.status_code == 200 and response.text:
+                    # Try to parse different formats
+                    if 'fmt=srv3' in str(params) or 'fmt=srv1' in str(params):
+                        # Parse XML response
+                        try:
+                            root = ET.fromstring(response.text)
+                            text_elements = root.findall('.//text')
+                            transcript_text = " ".join([elem.text for elem in text_elements if elem.text])
+                            
+                            if transcript_text.strip():
+                                return transcript_text.strip()
+                        except:
+                            continue
+                    
+                    elif 'fmt=ttml' in str(params):
+                        # Parse TTML format
+                        try:
+                            root = ET.fromstring(response.text)
+                            # TTML has different structure
+                            p_elements = root.findall('.//{http://www.w3.org/ns/ttml}p')
+                            transcript_text = " ".join([elem.text for elem in p_elements if elem.text])
+                            
+                            if transcript_text.strip():
+                                return transcript_text.strip()
+                        except:
+                            continue
+                            
+            except Exception as e:
+                print(f"Alternative params failed: {e}")
+                continue
+        
+        # Method 3: Try using YouTube watch page approach
+        try:
+            watch_headers = get_random_headers()
+            watch_url = f"https://m.youtube.com/watch?v={video_id}"
+            
+            response = requests.get(watch_url, headers=watch_headers, timeout=10)
+            
+            if response.status_code == 200:
+                # Look for caption tracks in the page source
+                import re
+                caption_pattern = r'"captionTracks":\[(.*?)\]'
+                match = re.search(caption_pattern, response.text)
+                
+                if match:
+                    print("Found caption tracks in page source")
+                    # This would require more complex parsing
+                    # For now, just indicate we found something
+                    
+        except Exception as e:
+            print(f"Watch page method failed: {e}")
                 
         return ""
         
@@ -75,29 +125,54 @@ def get_transcript_alternative(video_id: str) -> str:
         return ""
 
 def get_random_headers():
-    """Get random headers to avoid detection"""
+    """Get random headers to avoid detection with updated 2025 browser versions"""
     user_agents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:89.0) Gecko/20100101 Firefox/89.0',
-        'Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/91.0.864.59',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15'
+        # Chrome 129 (Latest 2025)
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+        
+        # Chrome 128 (Stable)
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        
+        # Firefox 130 (Latest 2025)
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0',
+        'Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0',
+        
+        # Firefox 129 (Stable)
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:129.0) Gecko/20100101 Firefox/129.0',
+        
+        # Edge 129 (Latest 2025)
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0',
+        
+        # Safari 17.6 (Latest 2025)
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Safari/605.1.15',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.6 Mobile/15E148 Safari/604.1',
+        
+        # Opera 104 (Latest 2025)
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 OPR/104.0.0.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 OPR/104.0.0.0'
     ]
     
     return {
         'User-Agent': random.choice(user_agents),
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br, zstd',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Site': 'none',
-        'Cache-Control': 'max-age=0'
+        'Sec-Fetch-User': '?1',
+        'sec-ch-ua': '"Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'Cache-Control': 'max-age=0',
+        'DNT': '1'
     }
 
 def get_video_id(url: str) -> str:
@@ -124,18 +199,28 @@ def check_video_duration(video_id: str) -> bool:
 async def extract_text(video_id: str) -> str:
     """
     Extract text from YouTube video with IP masking and retry logic.
-    First tries YouTube's built-in captions with various fallback methods.
+    First tries alternative methods to bypass browser detection, then falls back to youtube-transcript-api.
     """
     
-    # Multiple attempts with different strategies
+    # First, try alternative method with updated headers (bypass browser check)
+    print("Trying alternative method with updated 2025 browser headers...")
+    try:
+        alternative_text = get_transcript_alternative(video_id)
+        if alternative_text:
+            print("Successfully extracted transcript using alternative method with updated headers")
+            return alternative_text
+    except Exception as e:
+        print(f"Alternative method failed: {e}")
+    
+    # Then try the standard youtube-transcript-api with multiple strategies
     strategies = [
-        {"use_proxy": False, "retry_count": 3, "delay": 1},
-        {"use_proxy": True, "retry_count": 2, "delay": 2},
-        {"use_proxy": False, "retry_count": 1, "delay": 5}
+        {"retry_count": 2, "delay": 1},
+        {"retry_count": 2, "delay": 3},
+        {"retry_count": 1, "delay": 5}
     ]
     
     for strategy_idx, strategy in enumerate(strategies):
-        print(f"Trying strategy {strategy_idx + 1}: {strategy}")
+        print(f"Trying youtube-transcript-api strategy {strategy_idx + 1}: {strategy}")
         
         for attempt in range(strategy["retry_count"]):
             try:
@@ -146,24 +231,6 @@ async def extract_text(video_id: str) -> str:
                     delay = strategy["delay"] + random.uniform(0, 2)
                     print(f"Waiting {delay:.1f} seconds before retry...")
                     time.sleep(delay)
-                
-                # Try to get existing YouTube captions
-                if strategy["use_proxy"]:
-                    # Use proxy configuration
-                    proxies = get_proxy_list()
-                    if proxies:
-                        proxy = random.choice(proxies)
-                        print(f"Using proxy: {proxy}")
-                        # Note: youtube_transcript_api doesn't directly support proxies
-                        # We'll need to configure requests session
-                        import requests
-                        session = requests.Session()
-                        session.proxies = proxy
-                        session.headers.update(get_random_headers())
-                
-                # Set random headers and session
-                headers = get_random_headers()
-                print("Using headers:", headers.get('User-Agent', 'Default'))
                 
                 # Try different language codes
                 language_codes = ['en', 'en-US', 'en-GB', 'auto']
@@ -190,8 +257,14 @@ async def extract_text(video_id: str) -> str:
                         print(f"Language {lang_code} failed: {str(e)}")
                         continue
                     except Exception as e:
-                        print(f"Language {lang_code} error: {str(e)}")
-                        continue
+                        error_msg = str(e).lower()
+                        if "browser" in error_msg or "update" in error_msg or "supported" in error_msg:
+                            print(f"Browser detection error for {lang_code}: {e}")
+                            # Skip this language and try next
+                            continue
+                        else:
+                            print(f"Language {lang_code} error: {str(e)}")
+                            continue
                 
                 # If we get here, all language attempts failed for this strategy
                 print("All language codes failed for this attempt")
@@ -205,7 +278,11 @@ async def extract_text(video_id: str) -> str:
                 return "Error: The video is unavailable."
             except Exception as e:
                 error_msg = str(e).lower()
-                if "ip" in error_msg or "blocked" in error_msg or "rate" in error_msg:
+                if "browser" in error_msg or "update" in error_msg or "supported" in error_msg:
+                    print(f"Browser detection error: {e}")
+                    # This is the browser update error - try next strategy
+                    break
+                elif "ip" in error_msg or "blocked" in error_msg or "rate" in error_msg:
                     print(f"IP/Rate limiting detected: {e}")
                     if attempt < strategy["retry_count"] - 1:
                         continue  # Try again with this strategy
@@ -216,18 +293,18 @@ async def extract_text(video_id: str) -> str:
                     if attempt < strategy["retry_count"] - 1:
                         continue
     
-    # Final fallback: try alternative method
-    print("Trying alternative transcript extraction method...")
+    # Final fallback: try alternative method again with different parameters
+    print("Trying alternative method again as final fallback...")
     try:
         alternative_text = get_transcript_alternative(video_id)
         if alternative_text:
-            print("Successfully extracted transcript using alternative method")
+            print("Successfully extracted transcript using alternative method (final attempt)")
             return alternative_text
     except Exception as e:
-        print(f"Alternative method also failed: {e}")
+        print(f"Final alternative method also failed: {e}")
     
     # If all strategies failed
-    return "Error: Unable to extract transcript after multiple attempts. The video may not have captions available or there may be access restrictions."
+    return "Error: Unable to extract transcript. YouTube is blocking requests or the video may not have captions available. This appears to be due to browser detection - please try again later."
 
 def get_proxy_list():
     """Get list of free proxy servers for testing"""
